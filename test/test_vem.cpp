@@ -117,5 +117,25 @@ int main() {
     // 注意：这里的误差可能略大一点点，取决于数值积分精度，但对于线性函数应该是机器精度
     checkCondition(err_poly < 1e-9, "B matrix satisfies Polynomial Consistency (B*u = G*s).");
 
+
+    // 4. 计算刚度矩阵
+    Eigen::MatrixXd K = vem_elem.computeStiffness(mat);
+    std::cout << "Computed Stiffness K size: " << K.rows() << "x" << K.cols() << std::endl;
+    
+    // 验证 K 的谱性质
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es_K(K);
+    Eigen::VectorXd ev_K = es_K.eigenvalues();
+    
+    int zero_ev_K = 0;
+    int neg_ev_K = 0;
+    for (int i = 0; i < ev_K.size(); ++i) {
+        if (std::abs(ev_K(i)) < 1e-8) zero_ev_K++;
+        else if (ev_K(i) < -1e-8) neg_ev_K++;
+    }
+    
+    std::cout << "Stiffness Eigenvalues: " << ev_K.head(10).transpose() << " ... " << std::endl;
+    
+    checkCondition(neg_ev_K == 0, "Stiffness matrix is positive semi-definite (no negative eigenvalues).");
+    checkCondition(zero_ev_K == 6, "Stiffness matrix has exactly 6 zero eigenvalues (Rigid Body Modes).");
     return 0;
 }

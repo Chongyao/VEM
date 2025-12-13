@@ -199,3 +199,100 @@ Eigen::MatrixXd VEMElement::computeB(const Material& mat) const {
 
     return B;
 }
+
+Eigen::MatrixXd VEMElement::computeD() const {
+    int n_monos = getNumMonomials();
+    
+    // 重新收集节点 (复用 computeB 中的逻辑，或者将其提取为辅助函数)
+    // 这里为了独立性，再写一遍
+    std::set<int> unique_node_ids;
+    for (int fid : elem_.face_indices) {
+        const auto* face = mesh_.getFace(fid);
+        for (int nid : face->node_indices) unique_node_ids.insert(nid);
+    }
+    std::vector<int> local_nodes(unique_node_ids.begin(), unique_node_ids.end());
+    
+    int n_dofs = 3 * local_nodes.size();
+    Eigen::MatrixXd D = Eigen::MatrixXd::Zero(n_dofs, n_monos);
+    
+    double inv_h = 1.0 / scaling_h_;
+    Eigen::Vector3d xc = scaling_center_;
+    
+    // 遍历所有节点
+    for (size_t i = 0; i < local_nodes.size(); ++i) {
+        Eigen::Vector3d pos = mesh_.getNodes().col(local_nodes[i]);
+        Eigen::Vector3d diff = (pos - xc) * inv_h; // Normalized position
+        
+        // 遍历所有单项式
+        // 0-2: Constant [1,0,0]...
+        // 3-11: Linear
+        for (int alpha = 0; alpha < n_monos; ++alpha) {
+            Eigen::Vector3d val = Eigen::Vector3d::Zero();
+            
+            if (alpha < 3) {
+                // Constant bases: 0->x, 1->y, 2->z
+                val(alpha) = 1.0;
+            } else {
+                // Linear bases
+                int linear_idx = alpha - 3;
+                int dir = linear_idx % 3; // Component direction
+                int var = linear_idx / 3; // Variable dependency
+                
+                // e.g. alpha corresponding to u = x_tilde * e_x
+                // dir = 0 (x), var = 0 (x)
+                val(dir) = diff(var);
+            }
+            
+            // Fill D matrix
+            // DOF layout: [node0_x, node0_y, node0_z, node1_x, ...]
+            D(3*i + 0, alpha) = val(0);
+            D(3*i + 1, alpha) = val(1);
+            D(3*i + 2, alpha) = val(2);
+        }
+    }
+    
+    return D;
+}
+
+Eigen::MatrixXd VEMElement::computeStiffness(const Material& mat) const {
+    // 1. Compute Matrices
+    Eigen::MatrixXd G = computeG(mat);
+    Eigen::MatrixXd B = computeB(mat);
+    Eigen::MatrixXd D = computeD();
+    
+    // 2. Consistency Term: K_c = B^T * G^+ * B
+    // G is singular (rank deficiency 6), so we use Pseudo-Inverse
+    Eigen::MatrixXd G_pinv = G.completeOrthogonalDecomposition().pseudoInverse();
+    Eigen::MatrixXd K_c = B.transpose() * G_pinv * B;
+    
+    // 3. Stabilization Term: K_s
+    // We use a least-squares projection stabilization
+    // P_ls = (D^T D)^-1 D^T
+    // Stabilizer = (I - D * P_ls)^T * (I - D * P_ls)
+    // This penalizes the difference between u and its best-fit polynomial P(u)
+    
+    // D^T * D is small (12x12), easy to invert
+    Eigen::MatrixXd DtD = D.transpose() * D;
+    Eigen::MatrixXd P_ls = DtD.ldlt().solve(D.transpose()); // Robust solve
+    
+    int n_dofs = D.rows();
+    Eigen::MatrixXd I = Eigen::MatrixXd::Identity(n_dofs, n_dofs);
+    Eigen::MatrixXd Proj_defect = I - D * P_ls;
+    
+    Eigen::MatrixXd K_s_raw = Proj_defect.transpose() * Proj_defect;
+    
+    // Calculate stabilization parameter alpha
+    // Typically trace(K_c) / N_dofs or similar scaling
+    // Use standard trace scaling
+    double trace_Kc = K_c.trace();
+    // Avoid division by zero if K_c is empty or zero (though unlikely)
+    double alpha = (trace_Kc > 1e-12) ? (trace_Kc / n_dofs) : 1.0; 
+    
+    // Usually stability scaling factor is around 0.5 to 1.0 times the mean diagonal stiffness
+    // Let's use 1.0 * mean_diag
+    // Gain 2014 suggests stability parameter based on material trace, but trace method is robust.
+    
+    Eigen::MatrixXd K_s = alpha * K_s_raw;
+    
+    return K_c + K_s;
+}

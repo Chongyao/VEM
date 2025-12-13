@@ -66,4 +66,12 @@ public:
     // 修正：我们需要从 mesh 获取单元的顶点列表。
     // 建议在 PolyhedronElement 中存储顶点列表，或者在此处实时收集。
     // 为了简单，我们可以在 computeB 内部收集顶点。
+
+    // 新增：计算 D 矩阵 (Matrix D)
+    // D_i_alpha = value of monomial alpha at DOF i
+    // Size: (n_dofs x n_monos)
+    Eigen::MatrixXd computeD() const;
+
+    // 新增：计算单元刚度矩阵 K = Kc + Ks
+    Eigen::MatrixXd computeStiffness(const Material& mat) const;
 };
