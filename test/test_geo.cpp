@@ -1,5 +1,15 @@
 #include <iostream>
+#include <cassert>
 #include "VEMMesh.hpp"
+
+// 简单的辅助函数，用于浮点数比较
+bool isApprox(double a, double b, double tol = 1e-10) {
+    return std::abs(a - b) < tol;
+}
+
+bool isApproxVec(const Eigen::VectorXd& a, const Eigen::VectorXd& b, double tol = 1e-10) {
+    return (a - b).norm() < tol;
+}
 
 int main() {
     VEMMesh mesh;
@@ -11,34 +21,31 @@ int main() {
          0, 0, 0, 0, 1, 1, 1, 1;
     mesh.setNodes(V);
 
-    // 2. 创建面 (6个四边形面)
-    // 逆时针顺序定义 (从外面看)
-    std::vector<int> f1 = {0, 3, 2, 1}; // Bottom
-    std::vector<int> f2 = {4, 5, 6, 7}; // Top
-    std::vector<int> f3 = {0, 1, 5, 4}; // Front
-    std::vector<int> f4 = {1, 2, 6, 5}; // Right
-    std::vector<int> f5 = {2, 3, 7, 6}; // Back
-    std::vector<int> f6 = {3, 0, 4, 7}; // Left
+    // 2. 创建一个底部面 (z=0, 0->3->2->1) 也就是 (0,0)->(0,1)->(1,1)->(1,0)
+    // 这是一个正方形，面积应为 1.0，中心在 (0.5, 0.5, 0.0)
+    std::vector<int> f1 = {0, 3, 2, 1}; 
+    int face_id = mesh.addPolygonFace(f1);
 
-    // 这里我们用 addPolygonFace 演示通用性，也可以扩展 addQuadFace
-    std::vector<int> face_ids;
-    face_ids.push_back(mesh.addPolygonFace(f1));
-    face_ids.push_back(mesh.addPolygonFace(f2));
-    face_ids.push_back(mesh.addPolygonFace(f3));
-    face_ids.push_back(mesh.addPolygonFace(f4));
-    face_ids.push_back(mesh.addPolygonFace(f5));
-    face_ids.push_back(mesh.addPolygonFace(f6));
+    // 3. 验证单项式积分 (Moments)
+    Eigen::Vector4d moments = mesh.getFace(face_id)->integrateMonomials(mesh.getNodes());
+    
+    std::cout << "Computed Moments: " << moments.transpose() << std::endl;
 
-    // 3. 创建单元 (1个六面体)
-    mesh.addElement(face_ids);
+    // 预期结果
+    // m0 (面积) = 1.0
+    // m1_x = x_c * Area = 0.5 * 1.0 = 0.5
+    // m1_y = y_c * Area = 0.5 * 1.0 = 0.5
+    // m1_z = z_c * Area = 0.0 * 1.0 = 0.0
+    Eigen::Vector4d expected;
+    expected << 1.0, 0.5, 0.5, 0.0;
 
-    // 4. 测试几何计算
-    auto props = mesh.getFace(0)->computeProps(mesh.getNodes());
-    std::cout << "Bottom Face Area: " << props.area << " (Expected: 1.0)" << std::endl;
-    std::cout << "Bottom Face Normal: " << props.normal.transpose() << " (Expected: 0 0 -1)" << std::endl;
-
-    // 5. 导出 VTK
-    mesh.exportToVTK("cube.vtu");
+    if (isApproxVec(moments, expected)) {
+        std::cout << "[PASSED] Face moments integration test passed!" << std::endl;
+    } else {
+        std::cerr << "[FAILED] Face moments mismatch!" << std::endl;
+        std::cerr << "Expected: " << expected.transpose() << std::endl;
+        return 1;
+    }
 
     return 0;
 }
