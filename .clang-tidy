@@ -1,0 +1,128 @@
+Checks: '-*,
+    bugprone-*,
+    -bugprone-reserved-identifier,
+    -bugprone-macro-parentheses,
+    -bugprone-easily-swappable-parameters,
+    -bugprone-exception-escape,
+    -bugprone-lambda-function-name,
+    -bugprone-narrowing-conversions,
+    clang-analyzer-*,
+    performance-*,
+    openmp-*,
+    concurrency-*,
+
+    misc-definitions-in-headers,
+    misc-misplaced-const,
+    misc-non-copyable-objects,
+    misc-redundant-expression,
+    misc-static-assert,
+    misc-throw-by-value-catch-by-reference,
+    misc-unconventional-assign-operator,
+    misc-uniqueptr-reset-release,
+    misc-unused-alias-decls,
+    misc-unused-using-decls,
+
+    cppcoreguidelines-*,
+    -cppcoreguidelines-macro-usage,
+    -cppcoreguidelines-avoid-magic-numbers,
+    -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+    -cppcoreguidelines-avoid-c-arrays,
+    -cppcoreguidelines-non-private-member-variables-in-classes,
+    -cppcoreguidelines-narrowing-conversions,
+
+    modernize-avoid-bind,
+    modernize-loop-convert,
+    modernize-make-shared,
+    modernize-make-unique,
+    modernize-raw-string-literal,
+    modernize-redundant-void-arg,
+    modernize-replace-auto-ptr,
+    modernize-replace-random-shuffle,
+    modernize-use-bool-literals,
+    modernize-use-override,
+    modernize-use-noexcept,
+    -modernize-use-nodiscard,
+    modernize-use-equals-delete,
+    modernize-use-default-member-init,
+    modernize-use-emplace,
+    modernize-use-nullptr,
+    modernize-use-using,
+    modernize-use-equals-default,
+
+    readability-*,
+    -readability-identifier-naming,
+    -readability-simplify-boolean-expr,
+    -readability-uppercase-literal-suffix,
+    -readability-convert-member-functions-to-static,
+    -readability-magic-numbers,
+    -readability-isolate-declaration,
+    -readability-container-contains,
+    -readability-function-cognitive-complexity,
+    -readability-function-size,
+    -readability-named-parameter,
+    -readability-implicit-bool-conversion,
+    -readability-else-after-return,
+    -readability-suspicious-call-argument
+
+'
+HeaderFilterRegex: '^(.*deps.*|)$'
+
+WarningsAsErrors: '*'
+
+CheckOptions:
+  - key: cppcoreguidelines-avoid-do-while.IgnoreMacros
+    value: 1
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: 1
+  - key: readability-identifier-length.MinimumVariableNameLength
+    value: 1
+  - key: readability-identifier-length.MinimumParameterNameLength
+    value: 1
+  - key: readability-identifier-length.MinimumLoopCounterNameLength
+    value: 1
+  - key: readability-identifier-length.MinimumExceptionNameLength
+    value: 1
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.ParameterCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: m_
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: m_
+  - key: readability-identifier-naming.PublicMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMethodPrefix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMethodPrefix
+    value: ''
+  - key: readability-identifier-naming.ParameterPackCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateTemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateUsingCase
+    value: lower_case
+  - key: readability-identifier-naming.TypeTemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.UsingCase
+    value: CamelCase
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: '[Rr]ef(erence)?$;[Vv]iew$'
