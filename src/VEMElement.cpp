@@ -1,5 +1,6 @@
 #include "VEMElement.hpp"
 #include <iostream>
+#include <set>
 
 Eigen::Matrix6d Material::getC() const {
     double l = lambda();
@@ -93,4 +94,108 @@ Eigen::MatrixXd VEMElement::computeG(const Material& mat) const {
     }
 
     return G;
+}
+
+Eigen::MatrixXd VEMElement::computeB(const Material& mat) const {
+    int n_monos = getNumMonomials(); // 12
+    
+    // 1. 收集单元的所有唯一顶点，并建立映射
+    std::set<int> unique_node_ids;
+    for (int fid : elem_.face_indices) {
+        const auto* face = mesh_.getFace(fid);
+        for (int nid : face->node_indices) {
+            unique_node_ids.insert(nid);
+        }
+    }
+    
+    // 建立 Global ID -> Local ID (0..N-1) 的映射
+    // 同时也保存一个 vector 用于反查
+    std::vector<int> local_nodes(unique_node_ids.begin(), unique_node_ids.end());
+    std::map<int, int> global_to_local;
+    for (size_t i = 0; i < local_nodes.size(); ++i) {
+        global_to_local[local_nodes[i]] = i;
+    }
+    
+    int n_nodes = local_nodes.size();
+    int n_dofs = 3 * n_nodes;
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(n_monos, n_dofs);
+    
+    Eigen::Matrix6d C = mat.getC();
+
+    // 2. 遍历所有面进行积分
+    for (int fid : elem_.face_indices) {
+        const auto* face = mesh_.getFace(fid);
+        
+        // 计算该面上形状函数的积分权重: int_f phi_k dS
+        auto shape_integrals = face->computeShapeFuncIntegrals(mesh_.getNodes());
+        
+        // 面的法向 (假设 computeProps 返回的是外法向，或者我们需要确保它是外法向)
+        // 注意：VEMFace 中存储的法向是局部定义的。对于凸多面体，通常需要检查法向是否指向单元外部。
+        // 一个简单的方法是检查 (FaceCentroid - ElemCentroid) . Normal > 0
+        GeometricProps f_props = face->computeProps(mesh_.getNodes());
+        Eigen::Vector3d outward_normal = f_props.normal;
+        if ((f_props.centroid - elem_.centroid).dot(outward_normal) < 0) {
+            outward_normal = -outward_normal;
+        }
+
+        // 3. 遍历所有单项式 m_alpha (Rows of B)
+        // 我们复用 computeG 中的 lambda (需要把它提出来或者复制一遍)
+        // 为了简单，建议把 getStrain 变成 VEMElement 的私有辅助函数
+        // 这里我先复制一遍逻辑
+        auto getStrain = [&](int i) -> Eigen::Vector6d {
+             // ... (复制之前的 getStrain 代码) ...
+             // 请务必保证 scaling_h_ 等参数一致
+             Eigen::Vector6d eps = Eigen::Vector6d::Zero();
+             double inv_h = 1.0 / scaling_h_;
+             if (i < 3) return eps;
+             int linear_idx = i - 3;
+             int dir = linear_idx % 3;
+             int var = linear_idx / 3;
+             Eigen::Matrix3d grad = Eigen::Matrix3d::Zero();
+             grad(dir, var) = inv_h; 
+             eps(0) = grad(0,0); eps(1) = grad(1,1); eps(2) = grad(2,2);
+             eps(3) = grad(1,2) + grad(2,1); eps(4) = grad(0,2) + grad(2,0); eps(5) = grad(0,1) + grad(1,0);
+             return eps;
+        };
+
+        for (int alpha = 0; alpha < n_monos; ++alpha) {
+            Eigen::Vector6d eps_alpha = getStrain(alpha);
+            
+            // 如果应变为0 (刚体平移)，则 traction = 0，B 对应行也是 0
+            if (eps_alpha.isZero()) continue;
+
+            // 计算应力 sigma = C * eps
+            Eigen::Vector6d sigma = C * eps_alpha;
+            
+            // 计算面上的牵引力 t = sigma * n (Voigt notation product)
+            // t_x = sig_xx * nx + sig_xy * ny + sig_xz * nz
+            // t_y = sig_yx * nx + sig_yy * ny + sig_yz * nz
+            // t_z = sig_zx * nx + sig_zy * ny + sig_zz * nz
+            
+            Eigen::Vector3d traction;
+            double nx = outward_normal.x();
+            double ny = outward_normal.y();
+            double nz = outward_normal.z();
+            
+            traction.x() = sigma(0)*nx + sigma(5)*ny + sigma(4)*nz;
+            traction.y() = sigma(5)*nx + sigma(1)*ny + sigma(3)*nz;
+            traction.z() = sigma(4)*nx + sigma(3)*ny + sigma(2)*nz;
+
+            // 4. 累加到矩阵 B
+            // B(alpha, dof) += int_f (t . v) dS
+            // 由于 t 是常数，int_f t . v dS = t . (sum_k v_k * weight_k)
+            // 所以对于每个节点 k，贡献是 t_dir * weight_k
+            
+            for (auto const& [node_id, weight] : shape_integrals) {
+                int local_id = global_to_local[node_id];
+                
+                // DoF 排列: [node0_x, node0_y, node0_z, node1_x, ...]
+                B(alpha, 3*local_id + 0) += traction.x() * weight;
+                B(alpha, 3*local_id + 1) += traction.y() * weight;
+                B(alpha, 3*local_id + 2) += traction.z() * weight;
+            }
+        }
+    }
+
+    return B;
 }

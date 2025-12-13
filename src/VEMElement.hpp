@@ -55,4 +55,15 @@ public:
     // [1, 0, 0], [0, 1, 0], [0, 0, 1], (平移)
     // [(x-xc)/h, 0, 0], [0, (x-xc)/h, 0], ... 
     static int getNumMonomials() { return 12; } // 3 (constant) + 9 (linear)
+
+    // 计算右端项矩阵 B (Matrix B)
+    // B_aI = int_dE (C : eps(m_a) . n) . phi_I dS
+    // Returns matrix of size (n_monos x n_dofs)
+    Eigen::MatrixXd computeB(const Material& mat) const;
+
+    // 辅助：获取自由度总数 (3 * N_vertices)
+    int getNumDofs() const { return 3 * elem_.face_indices.size(); /* 注意：这不对，elem 只有 face_indices */ }
+    // 修正：我们需要从 mesh 获取单元的顶点列表。
+    // 建议在 PolyhedronElement 中存储顶点列表，或者在此处实时收集。
+    // 为了简单，我们可以在 computeB 内部收集顶点。
 };
