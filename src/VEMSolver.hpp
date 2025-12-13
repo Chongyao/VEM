@@ -24,4 +24,12 @@ public:
     
     // 获取总自由度数
     int getNumDofs() const { return n_dofs_; }
+
+    // 新增：求解线性系统 K u = f
+    // dirichlet_bc: map<global_dof_index, value>
+    // f_ext: 外部力向量 (大小为 n_dofs)
+    // 返回: 全局位移向量 u
+    Eigen::VectorXd solve(const std::map<int, double>& dirichlet_bc, 
+                          const Eigen::VectorXd& f_ext);
+
 };
