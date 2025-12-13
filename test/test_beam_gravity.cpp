@@ -6,6 +6,7 @@
 #include "VEMMesh.hpp"
 #include "VEMSolver.hpp"
 #include "fem/FEMSolver.hpp"
+#include "io/VTKLoader.hpp"
 #include "io/VTKWriter.hpp"
 
 using namespace vem;
@@ -195,8 +196,11 @@ int main() {
 
     // 1. 生成网格
     VEMMesh mesh;
+    
+    io::VTKLoader loader;
+    mesh = *loader.load("beam.vtu");
     // 10x1x1 的梁，划分细一点: 10x2x2
-    createBeamMesh(mesh, 10, 2, 2, 10.0, 1.0, 1.0);
+    // createBeamMesh(mesh, 10, 2, 2, 10.0, 1.0, 1.0);
     
     std::cout << "Mesh: " << mesh.getNumNodes() << " nodes, " 
               << mesh.getNumElements() << " tetrahedra." << std::endl;
