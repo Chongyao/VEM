@@ -1,5 +1,5 @@
 #include <iostream>
-#include "VEMMesh.h"
+#include "VEMMesh.hpp"
 
 int main() {
     VEMMesh mesh;

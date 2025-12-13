@@ -71,7 +71,7 @@ set(INCLUDES
   # amgcl
   # progress_bar
   # fmt
-  # spdlog
+  spdlog
   # ipopt
   # # vtkio
   # autodiff
