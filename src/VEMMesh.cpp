@@ -1,7 +1,34 @@
 #include "VEMMesh.hpp"
 #include <fstream>
 #include <iostream>
+// --- 新增：拷贝构造函数实现 ---
+VEMMesh::VEMMesh(const VEMMesh& other) 
+    : nodes_(other.nodes_), 
+      elements_(other.elements_) 
+{
+    // 深拷贝 faces
+    faces_.reserve(other.faces_.size());
+    for (const auto& face_ptr : other.faces_) {
+        // 利用 clone() 创建副本
+        faces_.push_back(face_ptr->clone());
+    }
+}
 
+// --- 新增：赋值运算符实现 ---
+VEMMesh& VEMMesh::operator=(const VEMMesh& other) {
+    if (this != &other) {
+        nodes_ = other.nodes_;
+        elements_ = other.elements_;
+        
+        // 清空并重建 faces
+        faces_.clear();
+        faces_.reserve(other.faces_.size());
+        for (const auto& face_ptr : other.faces_) {
+            faces_.push_back(face_ptr->clone());
+        }
+    }
+    return *this;
+}
 // 实现 PolyhedronElement 的几何计算
 void PolyhedronElement::updateGeometricProps(const Eigen::MatrixXd& nodes, 
                                              const std::vector<std::unique_ptr<VEMFace>>& faces) {

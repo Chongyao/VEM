@@ -6,6 +6,7 @@ set(TESTS
     patch_single
     fem
     vem_vs_fem
+    beam_gravity
 )
 
 foreach(TEST IN LISTS TESTS)

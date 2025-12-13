@@ -16,6 +16,12 @@ GeometricProps TriFace::computeProps(const Eigen::MatrixXd& all_nodes) const {
     return props;
 }
 
+// --- TriFace Clone ---
+std::unique_ptr<VEMFace> TriFace::clone() const {
+    // 调用默认拷贝构造函数
+    return std::make_unique<TriFace>(*this);
+}
+
 Eigen::Vector4d TriFace::integrateMonomials(const Eigen::MatrixXd& all_nodes) const {
     // 复用 computeProps 的逻辑，减少代码重复
     GeometricProps props = computeProps(all_nodes);
@@ -135,4 +141,8 @@ std::map<int, double> PolygonFace::computeShapeFuncIntegrals(const Eigen::Matrix
     }
     
     return weights;
+}
+
+std::unique_ptr<VEMFace> PolygonFace::clone() const {
+    return std::make_unique<PolygonFace>(*this);
 }

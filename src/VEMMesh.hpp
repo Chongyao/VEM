@@ -25,6 +25,15 @@ private:
     std::vector<PolyhedronElement> elements_;
 
 public:
+    VEMMesh() = default;
+
+    // --- 新增：拷贝控制 (Copy Control) ---
+    VEMMesh(const VEMMesh& other);            // Copy Constructor
+    VEMMesh& operator=(const VEMMesh& other); // Copy Assignment
+    
+    // 显式声明移动操作为 default (因为自定义了拷贝操作，默认移动会被抑制)
+    VEMMesh(VEMMesh&&) = default;
+    VEMMesh& operator=(VEMMesh&&) = default;
     void setNodes(const Eigen::MatrixXd& V) { nodes_ = V; }
 
     int getNumElements() const { return elements_.size(); }
