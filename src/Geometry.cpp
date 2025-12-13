@@ -75,3 +75,64 @@ Eigen::Vector4d PolygonFace::integrateMonomials(const Eigen::MatrixXd& all_nodes
     
     return moments;
 }
+
+// --- TriFace 新增实现 ---
+std::map<int, double> TriFace::computeShapeFuncIntegrals(const Eigen::MatrixXd& all_nodes) const {
+    // 三角形的形状函数积分非常简单：Area / 3
+    GeometricProps props = computeProps(all_nodes);
+    double weight = props.area / 3.0;
+    
+    std::map<int, double> weights;
+    for (int idx : node_indices) {
+        weights[idx] = weight;
+    }
+    return weights;
+}
+
+// --- PolygonFace 新增实现 ---
+std::map<int, double> PolygonFace::computeShapeFuncIntegrals(const Eigen::MatrixXd& all_nodes) const {
+    std::map<int, double> weights;
+    // 初始化权重为0
+    for (int idx : node_indices) weights[idx] = 0.0;
+
+    // 1. 计算中心
+    Eigen::Vector3d center = Eigen::Vector3d::Zero();
+    for (int idx : node_indices) center += all_nodes.col(idx);
+    center /= node_indices.size();
+
+    double total_area = 0.0;
+    int N = node_indices.size();
+
+    // 2. 扇形剖分积分
+    // 假设 VEM 面内形状函数使得：中心点的值 v(C) = 1/N * sum(v_i)
+    // 且在每个子三角形上是线性的。
+    // 积分 int_f phi_i = sum_k int_{Tk} phi_i
+    
+    for (size_t k = 0; k < N; ++k) {
+        int idx_a = node_indices[k];
+        int idx_b = node_indices[(k + 1) % N];
+        
+        Eigen::Vector3d pa = all_nodes.col(idx_a);
+        Eigen::Vector3d pb = all_nodes.col(idx_b);
+
+        // 子三角形 T_k = (Center, A, B)
+        double tri_area = 0.5 * (pa - center).cross(pb - center).norm();
+        total_area += tri_area;
+
+        // 在三角形 (C, A, B) 上的积分贡献：
+        // 节点 A 的贡献: tri_area / 3
+        // 节点 B 的贡献: tri_area / 3
+        // 节点 Center 的贡献: tri_area / 3
+        
+        weights[idx_a] += tri_area / 3.0;
+        weights[idx_b] += tri_area / 3.0;
+        
+        // Center 的贡献均分给所有顶点 (因为 v(C) = mean(v_i))
+        double center_contrib = (tri_area / 3.0) / N;
+        for (int idx : node_indices) {
+            weights[idx] += center_contrib;
+        }
+    }
+    
+    return weights;
+}
