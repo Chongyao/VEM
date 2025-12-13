@@ -4,6 +4,7 @@ set(TESTS
     solver
     patch_linear
     patch_single
+    fem
 )
 
 foreach(TEST IN LISTS TESTS)

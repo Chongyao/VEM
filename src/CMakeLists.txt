@@ -1,4 +1,5 @@
 add_subdirectory(io)
+add_subdirectory(fem)
 
 aux_source_directory(. source)
 file(GLOB header *.h)
@@ -8,6 +9,7 @@ target_link_libraries(VEM
   Eigen3::Eigen
   spdlog::spdlog
   IO
+  FEM
 )
 
 
