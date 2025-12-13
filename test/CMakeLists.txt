@@ -5,6 +5,7 @@ set(TESTS
     patch_linear
     patch_single
     fem
+    vem_vs_fem
 )
 
 foreach(TEST IN LISTS TESTS)
