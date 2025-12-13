@@ -3,6 +3,7 @@ set(TESTS
     vem
     solver
     patch_linear
+    patch_single
 )
 
 foreach(TEST IN LISTS TESTS)
