@@ -27,6 +27,8 @@ private:
 public:
     void setNodes(const Eigen::MatrixXd& V) { nodes_ = V; }
 
+    int getNumElements() const { return elements_.size(); }
+
     int addTriFace(const std::vector<int>& ids) {
         faces_.push_back(std::make_unique<TriFace>(ids));
         return faces_.size() - 1;
