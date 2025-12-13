@@ -1,0 +1,14 @@
+diff --git a/include/spdlog/spdlog.h b/include/spdlog/spdlog.h
+index a8afbce..6086b88 100644
+--- a/include/spdlog/spdlog.h
++++ b/include/spdlog/spdlog.h
+@@ -8,6 +8,9 @@
+ #define SPDLOG_H
+ 
+ #pragma once
++#ifdef I
++#undef I
++#endif
+ 
+ #include <spdlog/common.h>
+ #include <spdlog/details/registry.h>

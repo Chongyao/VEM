@@ -1,0 +1,10 @@
+CPMAddPackage(
+  NAME autodiff
+  GIT_REPOSITORY "https://github.com/autodiff/autodiff.git"
+  GIT_TAG "v1.1.0"
+  OPTIONS
+  "AUTODIFF_BUILD_TESTS OFF"
+  "AUTODIFF_BUILD_PYTHON OFF"
+  "AUTODIFF_BUILD_EXAMPLES OFF"
+  "AUTODIFF_BUILD_DOCS OFF"
+)

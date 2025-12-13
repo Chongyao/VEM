@@ -1,0 +1,1235 @@
+diff --git a/CHOLMOD/Partition/cholmod_metis_wrapper.c b/CHOLMOD/Partition/cholmod_metis_wrapper.c
+index 42f967928..d9ec2b2f4 100644
+--- a/CHOLMOD/Partition/cholmod_metis_wrapper.c
++++ b/CHOLMOD/Partition/cholmod_metis_wrapper.c
+@@ -33,8 +33,8 @@
+ // unused by CHOLMOD:
+ // #include "SuiteSparse_metis/GKlib/timers.c"
+ // replace the timer functions from timers.c:
+-double gk_WClockSeconds(void) { return (0) ; }
+-double gk_CPUSeconds(void) { return (0) ; }
++double gk_WClockSeconds(void) { return (0); }
++double gk_CPUSeconds(void) { return (0); }
+ // #include "SuiteSparse_metis/GKlib/fs.c"
+ // #include "SuiteSparse_metis/GKlib/getopt.c"
+ // #include "SuiteSparse_metis/GKlib/gkregex.c"
+@@ -90,9 +90,8 @@ double gk_CPUSeconds(void) { return (0) ; }
+ #ifndef NDEBUG
+ #include "SuiteSparse_metis/libmetis/checkgraph.c"
+ #endif
+-// #include "SuiteSparse_metis/libmetis/frename.c"
+-// #include "SuiteSparse_metis/libmetis/mesh.c"
+-// #include "SuiteSparse_metis/libmetis/meshpart.c"
++#include "SuiteSparse_metis/libmetis/frename.c"
++#include "SuiteSparse_metis/libmetis/mesh.c"
++#include "SuiteSparse_metis/libmetis/meshpart.c"
+ 
+ #endif
+-
+diff --git a/CHOLMOD/SuiteSparse_metis/include/metis.h b/CHOLMOD/SuiteSparse_metis/include/metis.h
+index 1a90320e9..a1146f645 100644
+--- a/CHOLMOD/SuiteSparse_metis/include/metis.h
++++ b/CHOLMOD/SuiteSparse_metis/include/metis.h
+@@ -1,5 +1,5 @@
+ /*!
+-\file metis.h 
++\file metis.h
+ \brief This file contains function prototypes and constant definitions for METIS
+  *
+ \author George
+@@ -8,11 +8,11 @@
+ */
+ 
+ #ifndef _METIS_H_
+-#define _METIS_H_ 
++#define _METIS_H_
+ 
+ /****************************************************************************
+-* A set of defines that can be modified by the user
+-*****************************************************************************/
++ * A set of defines that can be modified by the user
++ *****************************************************************************/
+ 
+ /*--------------------------------------------------------------------------
+  Specifies the width of the elementary data type that will hold information
+@@ -33,7 +33,6 @@
+ // Revised for SuiteSparse:
+ #define IDXTYPEWIDTH 64
+ 
+-
+ /*--------------------------------------------------------------------------
+  Specifies the data type that will hold floating-point style information.
+ 
+@@ -43,22 +42,20 @@
+ --------------------------------------------------------------------------*/
+ #define REALTYPEWIDTH 32
+ 
+-
+-
+ /****************************************************************************
+-* In principle, nothing needs to be changed beyond this point, unless the
+-* int32_t and int64_t cannot be found in the normal places.
+-*****************************************************************************/
++ * In principle, nothing needs to be changed beyond this point, unless the
++ * int32_t and int64_t cannot be found in the normal places.
++ *****************************************************************************/
+ 
+ /* Uniform definitions for various compilers */
+ #if defined(_MSC_VER)
+-  #define COMPILER_MSC
++#define COMPILER_MSC
+ #endif
+ #if defined(__ICC)
+-  #define COMPILER_ICC
++#define COMPILER_ICC
+ #endif
+ #if defined(__GNUC__)
+-  #define COMPILER_GCC
++#define COMPILER_GCC
+ #endif
+ 
+ /* Include c99 int definitions and need constants. When building the library,
+@@ -69,114 +66,109 @@
+ 
+ typedef __int32 int32_t;
+ typedef __int64 int64_t;
+-#define PRId32       "I32d"
+-#define PRId64       "I64d"
+-#define SCNd32       "ld"
+-#define SCNd64       "I64d"
+-#define INT32_MIN    ((int32_t)_I32_MIN)
+-#define INT32_MAX    _I32_MAX
+-#define INT64_MIN    ((int64_t)_I64_MIN)
+-#define INT64_MAX    _I64_MAX
++#define PRId32 "I32d"
++#define PRId64 "I64d"
++#define SCNd32 "ld"
++#define SCNd64 "I64d"
++#define INT32_MIN ((int32_t)_I32_MIN)
++#define INT32_MAX _I32_MAX
++#define INT64_MIN ((int64_t)_I64_MIN)
++#define INT64_MAX _I64_MAX
+ #else
+ #include <inttypes.h>
+ #endif
+ #endif
+ 
+-
+ /*------------------------------------------------------------------------
+-* Setup the basic datatypes
+-*-------------------------------------------------------------------------*/
++ * Setup the basic datatypes
++ *-------------------------------------------------------------------------*/
+ #if IDXTYPEWIDTH == 32
+-  typedef int32_t idx_t;
++typedef int32_t idx_t;
+ 
+-  #define IDX_MAX   INT32_MAX
+-  #define IDX_MIN   INT32_MIN
++#define IDX_MAX INT32_MAX
++#define IDX_MIN INT32_MIN
+ 
+-  #define SCIDX  SCNd32
+-  #define PRIDX  PRId32
++#define SCIDX SCNd32
++#define PRIDX PRId32
+ 
+-  #define strtoidx      strtol
+-  #define iabs          abs
++#define strtoidx strtol
++#define iabs abs
+ #elif IDXTYPEWIDTH == 64
+-  typedef int64_t idx_t;
++typedef int64_t idx_t;
+ 
+-  #define IDX_MAX   INT64_MAX
+-  #define IDX_MIN   INT64_MIN
++#define IDX_MAX INT64_MAX
++#define IDX_MIN INT64_MIN
+ 
+-  #define SCIDX  SCNd64
+-  #define PRIDX  PRId64
++#define SCIDX SCNd64
++#define PRIDX PRId64
+ 
+ #ifdef COMPILER_MSC
+-  #define strtoidx      _strtoi64
++#define strtoidx _strtoi64
+ #else
+-  #define strtoidx      strtoll
++#define strtoidx strtoll
+ #endif
+-  // iabs replaced with SuiteSparse_metis_abs, Dec 2022
+-  #if 0
+-  #define iabs          labs
+-  #else
+-  #define iabs          SuiteSparse_metis_abs64
+-  static inline int64_t SuiteSparse_metis_abs64 (int64_t x)
+-  {
+-    return ((x < 0) ? (-x) : x) ;
+-  }
+-  #endif
++// iabs replaced with SuiteSparse_metis_abs, Dec 2022
++#if 0
++#define iabs labs
+ #else
+-  #error "Incorrect user-supplied value fo IDXTYPEWIDTH"
++#define iabs SuiteSparse_metis_abs64
++static inline int64_t SuiteSparse_metis_abs64(int64_t x)
++{
++    return ((x < 0) ? (-x) : x);
++}
++#endif
++#else
++#error "Incorrect user-supplied value fo IDXTYPEWIDTH"
+ #endif
+-
+ 
+ #if REALTYPEWIDTH == 32
+-  typedef float real_t;
++typedef float real_t;
+ 
+-  #define SCREAL         "f"
+-  #define PRREAL         "f"
+-  #define REAL_MAX       FLT_MAX
+-  #define REAL_MIN       FLT_MIN
+-  #define REAL_EPSILON   FLT_EPSILON
++#define SCREAL "f"
++#define PRREAL "f"
++#define REAL_MAX FLT_MAX
++#define REAL_MIN FLT_MIN
++#define REAL_EPSILON FLT_EPSILON
+ 
+-  #define rabs          fabsf
+-  #define REALEQ(x,y) ((rabs((x)-(y)) <= FLT_EPSILON))
++#define rabs fabsf
++#define REALEQ(x, y) ((rabs((x) - (y)) <= FLT_EPSILON))
+ 
+ #ifdef COMPILER_MSC
+-  #define strtoreal     (float)strtod
++#define strtoreal (float)strtod
+ #else
+-  #define strtoreal     strtof
++#define strtoreal strtof
+ #endif
+ #elif REALTYPEWIDTH == 64
+-  typedef double real_t;
++typedef double real_t;
+ 
+-  #define SCREAL         "lf"
+-  #define PRREAL         "lf"
+-  #define REAL_MAX       DBL_MAX
+-  #define REAL_MIN       DBL_MIN
+-  #define REAL_EPSILON   DBL_EPSILON
++#define SCREAL "lf"
++#define PRREAL "lf"
++#define REAL_MAX DBL_MAX
++#define REAL_MIN DBL_MIN
++#define REAL_EPSILON DBL_EPSILON
+ 
+-  #define rabs          fabs
+-  #define REALEQ(x,y) ((rabs((x)-(y)) <= DBL_EPSILON))
++#define rabs fabs
++#define REALEQ(x, y) ((rabs((x) - (y)) <= DBL_EPSILON))
+ 
+-  #define strtoreal     strtod
++#define strtoreal strtod
+ #else
+-  #error "Incorrect user-supplied value for REALTYPEWIDTH"
++#error "Incorrect user-supplied value for REALTYPEWIDTH"
+ #endif
+ 
+-
+ /*------------------------------------------------------------------------
+-* Constant definitions 
+-*-------------------------------------------------------------------------*/
++ * Constant definitions
++ *-------------------------------------------------------------------------*/
+ /* Metis's version number */
+-#define METIS_VER_MAJOR         5
+-#define METIS_VER_MINOR         1
+-#define METIS_VER_SUBMINOR      0
++#define METIS_VER_MAJOR 5
++#define METIS_VER_MINOR 1
++#define METIS_VER_SUBMINOR 0
+ 
+ /* The maximum length of the options[] array */
+-#define METIS_NOPTIONS          40
+-
+-
++#define METIS_NOPTIONS 40
+ 
+ /*------------------------------------------------------------------------
+-* Function prototypes 
+-*-------------------------------------------------------------------------*/
++ * Function prototypes
++ *-------------------------------------------------------------------------*/
+ 
+ #if 0
+ // Windows __declspec removed for SuiteSparse, Jan 2023
+@@ -191,175 +183,173 @@ typedef __int64 int64_t;
+ #define METIS_API(type) type
+ #endif
+ 
+-
+-
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
+-METIS_API(int) METIS_PartGraphRecursive(idx_t *nvtxs, idx_t *ncon, idx_t *xadj, 
+-                  idx_t *adjncy, idx_t *vwgt, idx_t *vsize, idx_t *adjwgt, 
+-                  idx_t *nparts, real_t *tpwgts, real_t *ubvec, idx_t *options, 
+-                  idx_t *edgecut, idx_t *part);
+-
+-METIS_API(int) METIS_PartGraphKway(idx_t *nvtxs, idx_t *ncon, idx_t *xadj, 
+-                  idx_t *adjncy, idx_t *vwgt, idx_t *vsize, idx_t *adjwgt, 
+-                  idx_t *nparts, real_t *tpwgts, real_t *ubvec, idx_t *options, 
+-                  idx_t *edgecut, idx_t *part);
++METIS_API(int)
++METIS_PartGraphRecursive(idx_t* nvtxs, idx_t* ncon, idx_t* xadj,
++    idx_t* adjncy, idx_t* vwgt, idx_t* vsize, idx_t* adjwgt,
++    idx_t* nparts, real_t* tpwgts, real_t* ubvec, idx_t* options,
++    idx_t* edgecut, idx_t* part);
+ 
+-METIS_API(int) METIS_MeshToDual(idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, 
+-                  idx_t *ncommon, idx_t *numflag, idx_t **r_xadj, idx_t **r_adjncy);
++METIS_API(int)
++METIS_PartGraphKway(idx_t* nvtxs, idx_t* ncon, idx_t* xadj,
++    idx_t* adjncy, idx_t* vwgt, idx_t* vsize, idx_t* adjwgt,
++    idx_t* nparts, real_t* tpwgts, real_t* ubvec, idx_t* options,
++    idx_t* edgecut, idx_t* part);
+ 
+-METIS_API(int) METIS_MeshToNodal(idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, 
+-                  idx_t *numflag, idx_t **r_xadj, idx_t **r_adjncy);
++METIS_API(int)
++METIS_MeshToDual(idx_t* ne, idx_t* nn, idx_t* eptr, idx_t* eind,
++    idx_t* ncommon, idx_t* numflag, idx_t** r_xadj, idx_t** r_adjncy);
+ 
+-METIS_API(int) METIS_PartMeshNodal(idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind,
+-                  idx_t *vwgt, idx_t *vsize, idx_t *nparts, real_t *tpwgts, 
+-                  idx_t *options, idx_t *objval, idx_t *epart, idx_t *npart);
++METIS_API(int)
++METIS_MeshToNodal(idx_t* ne, idx_t* nn, idx_t* eptr, idx_t* eind,
++    idx_t* numflag, idx_t** r_xadj, idx_t** r_adjncy);
+ 
+-METIS_API(int) METIS_PartMeshDual(idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind,
+-                  idx_t *vwgt, idx_t *vsize, idx_t *ncommon, idx_t *nparts, 
+-                  real_t *tpwgts, idx_t *options, idx_t *objval, idx_t *epart, 
+-                  idx_t *npart);
++METIS_API(int)
++METIS_PartMeshNodal(idx_t* ne, idx_t* nn, idx_t* eptr, idx_t* eind,
++    idx_t* vwgt, idx_t* vsize, idx_t* nparts, real_t* tpwgts,
++    idx_t* options, idx_t* objval, idx_t* epart, idx_t* npart);
+ 
+-METIS_API(int) METIS_NodeND(idx_t *nvtxs, idx_t *xadj, idx_t *adjncy, idx_t *vwgt,
+-                  idx_t *options, idx_t *perm, idx_t *iperm);
++METIS_API(int)
++METIS_PartMeshDual(idx_t* ne, idx_t* nn, idx_t* eptr, idx_t* eind,
++    idx_t* vwgt, idx_t* vsize, idx_t* ncommon, idx_t* nparts,
++    real_t* tpwgts, idx_t* options, idx_t* objval, idx_t* epart,
++    idx_t* npart, idx_t* adjwgt);
+ 
+-METIS_API(int) METIS_Free(void *ptr);
++METIS_API(int)
++METIS_NodeND(idx_t* nvtxs, idx_t* xadj, idx_t* adjncy, idx_t* vwgt,
++    idx_t* options, idx_t* perm, idx_t* iperm);
+ 
+-METIS_API(int) METIS_SetDefaultOptions(idx_t *options);
++METIS_API(int)
++METIS_Free(void* ptr);
+ 
++METIS_API(int)
++METIS_SetDefaultOptions(idx_t* options);
+ 
+ /* These functions are used by ParMETIS */
+ 
+-METIS_API(int) METIS_NodeNDP(idx_t nvtxs, idx_t *xadj, idx_t *adjncy, idx_t *vwgt,
+-                   idx_t npes, idx_t *options, idx_t *perm, idx_t *iperm, 
+-                   idx_t *sizes);
++METIS_API(int)
++METIS_NodeNDP(idx_t nvtxs, idx_t* xadj, idx_t* adjncy, idx_t* vwgt,
++    idx_t npes, idx_t* options, idx_t* perm, idx_t* iperm,
++    idx_t* sizes);
+ 
+-METIS_API(int) METIS_ComputeVertexSeparator(idx_t *nvtxs, idx_t *xadj, idx_t *adjncy, 
+-                   idx_t *vwgt, idx_t *options, idx_t *sepsize, idx_t *part);
+-
+-METIS_API(int) METIS_NodeRefine(idx_t nvtxs, idx_t *xadj, idx_t *vwgt, idx_t *adjncy,
+-                   idx_t *where, idx_t *hmarker, real_t ubfactor);
++METIS_API(int)
++METIS_ComputeVertexSeparator(idx_t* nvtxs, idx_t* xadj, idx_t* adjncy,
++    idx_t* vwgt, idx_t* options, idx_t* sepsize, idx_t* part);
+ 
++METIS_API(int)
++METIS_NodeRefine(idx_t nvtxs, idx_t* xadj, idx_t* vwgt, idx_t* adjncy,
++    idx_t* where, idx_t* hmarker, real_t ubfactor);
+ 
+ #ifdef __cplusplus
+ }
+ #endif
+ 
+-
+-
+ /*------------------------------------------------------------------------
+-* Enum type definitions 
+-*-------------------------------------------------------------------------*/
++ * Enum type definitions
++ *-------------------------------------------------------------------------*/
+ /*! Return codes */
+ typedef enum {
+-  METIS_OK              = 1,    /*!< Returned normally */
+-  METIS_ERROR_INPUT     = -2,   /*!< Returned due to erroneous inputs and/or options */
+-  METIS_ERROR_MEMORY    = -3,   /*!< Returned due to insufficient memory */
+-  METIS_ERROR           = -4    /*!< Some other errors */
+-} rstatus_et; 
+-
++    METIS_OK = 1, /*!< Returned normally */
++    METIS_ERROR_INPUT = -2, /*!< Returned due to erroneous inputs and/or options */
++    METIS_ERROR_MEMORY = -3, /*!< Returned due to insufficient memory */
++    METIS_ERROR = -4 /*!< Some other errors */
++} rstatus_et;
+ 
+ /*! Operation type codes */
+ typedef enum {
+-  METIS_OP_PMETIS,       
+-  METIS_OP_KMETIS,
+-  METIS_OP_OMETIS
++    METIS_OP_PMETIS,
++    METIS_OP_KMETIS,
++    METIS_OP_OMETIS
+ } moptype_et;
+ 
+-
+ /*! Options codes (i.e., options[]) */
+ typedef enum {
+-  METIS_OPTION_PTYPE,
+-  METIS_OPTION_OBJTYPE,
+-  METIS_OPTION_CTYPE,
+-  METIS_OPTION_IPTYPE,
+-  METIS_OPTION_RTYPE,
+-  METIS_OPTION_DBGLVL,
+-  METIS_OPTION_NITER,
+-  METIS_OPTION_NCUTS,
+-  METIS_OPTION_SEED,
+-  METIS_OPTION_NO2HOP,
+-  METIS_OPTION_MINCONN,
+-  METIS_OPTION_CONTIG,
+-  METIS_OPTION_COMPRESS,
+-  METIS_OPTION_CCORDER,
+-  METIS_OPTION_PFACTOR,
+-  METIS_OPTION_NSEPS,
+-  METIS_OPTION_UFACTOR,
+-  METIS_OPTION_NUMBERING,
+-
+-  /* Used for command-line parameter purposes */
+-  METIS_OPTION_HELP,
+-  METIS_OPTION_TPWGTS,
+-  METIS_OPTION_NCOMMON,
+-  METIS_OPTION_NOOUTPUT,
+-  METIS_OPTION_BALANCE,
+-  METIS_OPTION_GTYPE,
+-  METIS_OPTION_UBVEC
++    METIS_OPTION_PTYPE,
++    METIS_OPTION_OBJTYPE,
++    METIS_OPTION_CTYPE,
++    METIS_OPTION_IPTYPE,
++    METIS_OPTION_RTYPE,
++    METIS_OPTION_DBGLVL,
++    METIS_OPTION_NITER,
++    METIS_OPTION_NCUTS,
++    METIS_OPTION_SEED,
++    METIS_OPTION_NO2HOP,
++    METIS_OPTION_MINCONN,
++    METIS_OPTION_CONTIG,
++    METIS_OPTION_COMPRESS,
++    METIS_OPTION_CCORDER,
++    METIS_OPTION_PFACTOR,
++    METIS_OPTION_NSEPS,
++    METIS_OPTION_UFACTOR,
++    METIS_OPTION_NUMBERING,
++
++    /* Used for command-line parameter purposes */
++    METIS_OPTION_HELP,
++    METIS_OPTION_TPWGTS,
++    METIS_OPTION_NCOMMON,
++    METIS_OPTION_NOOUTPUT,
++    METIS_OPTION_BALANCE,
++    METIS_OPTION_GTYPE,
++    METIS_OPTION_UBVEC
+ } moptions_et;
+ 
+-
+ /*! Partitioning Schemes */
+ typedef enum {
+-  METIS_PTYPE_RB, 
+-  METIS_PTYPE_KWAY                
++    METIS_PTYPE_RB,
++    METIS_PTYPE_KWAY
+ } mptype_et;
+ 
+ /*! Graph types for meshes */
+ typedef enum {
+-  METIS_GTYPE_DUAL,
+-  METIS_GTYPE_NODAL               
++    METIS_GTYPE_DUAL,
++    METIS_GTYPE_NODAL
+ } mgtype_et;
+ 
+ /*! Coarsening Schemes */
+ typedef enum {
+-  METIS_CTYPE_RM,
+-  METIS_CTYPE_SHEM
++    METIS_CTYPE_RM,
++    METIS_CTYPE_SHEM
+ } mctype_et;
+ 
+ /*! Initial partitioning schemes */
+ typedef enum {
+-  METIS_IPTYPE_GROW,
+-  METIS_IPTYPE_RANDOM,
+-  METIS_IPTYPE_EDGE,
+-  METIS_IPTYPE_NODE,
+-  METIS_IPTYPE_METISRB
++    METIS_IPTYPE_GROW,
++    METIS_IPTYPE_RANDOM,
++    METIS_IPTYPE_EDGE,
++    METIS_IPTYPE_NODE,
++    METIS_IPTYPE_METISRB
+ } miptype_et;
+ 
+-
+ /*! Refinement schemes */
+ typedef enum {
+-  METIS_RTYPE_FM,
+-  METIS_RTYPE_GREEDY,
+-  METIS_RTYPE_SEP2SIDED,
+-  METIS_RTYPE_SEP1SIDED
++    METIS_RTYPE_FM,
++    METIS_RTYPE_GREEDY,
++    METIS_RTYPE_SEP2SIDED,
++    METIS_RTYPE_SEP1SIDED
+ } mrtype_et;
+ 
+-
+ /*! Debug Levels */
+ typedef enum {
+-  METIS_DBG_INFO       = 1,       /*!< Shows various diagnostic messages */
+-  METIS_DBG_TIME       = 2,       /*!< Perform timing analysis */
+-  METIS_DBG_COARSEN    = 4,	  /*!< Show the coarsening progress */
+-  METIS_DBG_REFINE     = 8,	  /*!< Show the refinement progress */
+-  METIS_DBG_IPART      = 16, 	  /*!< Show info on initial partitioning */
+-  METIS_DBG_MOVEINFO   = 32, 	  /*!< Show info on vertex moves during refinement */
+-  METIS_DBG_SEPINFO    = 64, 	  /*!< Show info on vertex moves during sep refinement */
+-  METIS_DBG_CONNINFO   = 128,     /*!< Show info on minimization of subdomain connectivity */
+-  METIS_DBG_CONTIGINFO = 256,     /*!< Show info on elimination of connected components */ 
+-  METIS_DBG_MEMORY     = 2048,    /*!< Show info related to wspace allocation */
++    METIS_DBG_INFO = 1, /*!< Shows various diagnostic messages */
++    METIS_DBG_TIME = 2, /*!< Perform timing analysis */
++    METIS_DBG_COARSEN = 4, /*!< Show the coarsening progress */
++    METIS_DBG_REFINE = 8, /*!< Show the refinement progress */
++    METIS_DBG_IPART = 16, /*!< Show info on initial partitioning */
++    METIS_DBG_MOVEINFO = 32, /*!< Show info on vertex moves during refinement */
++    METIS_DBG_SEPINFO = 64, /*!< Show info on vertex moves during sep refinement */
++    METIS_DBG_CONNINFO = 128, /*!< Show info on minimization of subdomain connectivity */
++    METIS_DBG_CONTIGINFO = 256, /*!< Show info on elimination of connected components */
++    METIS_DBG_MEMORY = 2048, /*!< Show info related to wspace allocation */
+ } mdbglvl_et;
+ 
+-
+ /* Types of objectives */
+ typedef enum {
+-  METIS_OBJTYPE_CUT,
+-  METIS_OBJTYPE_VOL,
+-  METIS_OBJTYPE_NODE
++    METIS_OBJTYPE_CUT,
++    METIS_OBJTYPE_VOL,
++    METIS_OBJTYPE_NODE
+ } mobjtype_et;
+ 
+-
+-
+-#endif  /* _METIS_H_ */
++#endif /* _METIS_H_ */
+diff --git a/CHOLMOD/SuiteSparse_metis/libmetis/frename.c b/CHOLMOD/SuiteSparse_metis/libmetis/frename.c
+index 3d43c3ade..5319707d1 100644
+--- a/CHOLMOD/SuiteSparse_metis/libmetis/frename.c
++++ b/CHOLMOD/SuiteSparse_metis/libmetis/frename.c
+@@ -2,7 +2,7 @@
+  * Copyright 1997, Regents of the University of Minnesota
+  *
+  * Frename.c
+- * 
++ *
+  * THis file contains some renaming routines to deal with different Fortran compilers
+  *
+  * Started 9/15/97
+@@ -10,127 +10,106 @@
+  *
+  */
+ 
+-
+ #include "metislib.h"
+ 
+-#define FRENAME(name, dargs, cargs, name1, name2, name3, name4)   \
+-  int name1 dargs { return name cargs; }                          \
+-  int name2 dargs { return name cargs; }                          \
+-  int name3 dargs { return name cargs; }                          \
+-  int name4 dargs { return name cargs; }
+-
++#define FRENAME(name, dargs, cargs, name1, name2, name3, name4) \
++    int name1 dargs { return name cargs; }                      \
++    int name2 dargs { return name cargs; }                      \
++    int name3 dargs { return name cargs; }                      \
++    int name4 dargs { return name cargs; }
+ 
+ FRENAME(
+-    METIS_PartGraphRecursive, 
+-    (idx_t *nvtxs, idx_t *ncon, idx_t *xadj, idx_t *adjncy, idx_t *vwgt, 
+-     idx_t *vsize, idx_t *adjwgt, idx_t *nparts, real_t *tpwgts, 
+-     real_t *ubvec, idx_t *options, idx_t *edgecut, idx_t *part),
+-    (nvtxs, ncon, xadj, adjncy, vwgt, 
+-     vsize, adjwgt, nparts, tpwgts, 
+-     ubvec, options, edgecut, part),
+-    METIS_PARTGRAPHRECURSIVE, 
+-    metis_partgraphrecursive, 
+-    metis_partgraphrecursive_, 
+-    metis_partgraphrecursive__
+-) 
+-    
++    METIS_PartGraphRecursive,
++    (idx_t * nvtxs, idx_t* ncon, idx_t* xadj, idx_t* adjncy, idx_t* vwgt,
++        idx_t* vsize, idx_t* adjwgt, idx_t* nparts, real_t* tpwgts,
++        real_t* ubvec, idx_t* options, idx_t* edgecut, idx_t* part),
++    (nvtxs, ncon, xadj, adjncy, vwgt,
++        vsize, adjwgt, nparts, tpwgts,
++        ubvec, options, edgecut, part),
++    METIS_PARTGRAPHRECURSIVE,
++    metis_partgraphrecursive,
++    metis_partgraphrecursive_,
++    metis_partgraphrecursive__)
+ 
+ FRENAME(
+     METIS_PartGraphKway,
+-    (idx_t *nvtxs, idx_t *ncon, idx_t *xadj, idx_t *adjncy, idx_t *vwgt, 
+-     idx_t *vsize, idx_t *adjwgt, idx_t *nparts, real_t *tpwgts, 
+-     real_t *ubvec, idx_t *options, idx_t *edgecut, idx_t *part),
+-    (nvtxs, ncon, xadj, adjncy, vwgt, 
+-     vsize, adjwgt, nparts, tpwgts, 
+-     ubvec, options, edgecut, part),
++    (idx_t * nvtxs, idx_t* ncon, idx_t* xadj, idx_t* adjncy, idx_t* vwgt,
++        idx_t* vsize, idx_t* adjwgt, idx_t* nparts, real_t* tpwgts,
++        real_t* ubvec, idx_t* options, idx_t* edgecut, idx_t* part),
++    (nvtxs, ncon, xadj, adjncy, vwgt,
++        vsize, adjwgt, nparts, tpwgts,
++        ubvec, options, edgecut, part),
+     METIS_PARTGRAPHKWAY,
+     metis_partgraphkway,
+     metis_partgraphkway_,
+-    metis_partgraphkway__
+-)
++    metis_partgraphkway__)
+ 
+ FRENAME(
+-  METIS_MeshToDual,
+-  (idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, idx_t *ncommon, idx_t *numflag, 
+-   idx_t **r_xadj, idx_t **r_adjncy),
+-  (ne, nn, eptr, eind, ncommon, numflag, r_xadj, r_adjncy),
+-  METIS_MESHTODUAL,
+-  metis_meshtodual,
+-  metis_meshtodual_,
+-  metis_meshtodual__
+-)
+-
++    METIS_MeshToDual,
++    (idx_t * ne, idx_t* nn, idx_t* eptr, idx_t* eind, idx_t* ncommon, idx_t* numflag,
++        idx_t** r_xadj, idx_t** r_adjncy),
++    (ne, nn, eptr, eind, ncommon, numflag, r_xadj, r_adjncy),
++    METIS_MESHTODUAL,
++    metis_meshtodual,
++    metis_meshtodual_,
++    metis_meshtodual__)
+ 
+ FRENAME(
+-  METIS_MeshToNodal,
+-  (idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, idx_t *numflag, idx_t **r_xadj, 
+-   idx_t **r_adjncy),
+-  (ne, nn, eptr, eind, numflag, r_xadj, r_adjncy),
+-  METIS_MESHTONODAL,
+-  metis_meshtonodal,
+-  metis_meshtonodal_,
+-  metis_meshtonodal__
+-)
+-  
++    METIS_MeshToNodal,
++    (idx_t * ne, idx_t* nn, idx_t* eptr, idx_t* eind, idx_t* numflag, idx_t** r_xadj,
++        idx_t** r_adjncy),
++    (ne, nn, eptr, eind, numflag, r_xadj, r_adjncy),
++    METIS_MESHTONODAL,
++    metis_meshtonodal,
++    metis_meshtonodal_,
++    metis_meshtonodal__)
+ 
+ FRENAME(
+-  METIS_PartMeshNodal,
+-  (idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, idx_t *vwgt, idx_t *vsize, 
+-   idx_t *nparts, real_t *tpwgts, idx_t *options, idx_t *objval, idx_t *epart, 
+-   idx_t *npart),
+-  (ne, nn, eptr, eind, vwgt, vsize, nparts, tpwgts, options, objval, epart, npart),
+-  METIS_PARTMESHNODAL,
+-  metis_partmeshnodal,
+-  metis_partmeshnodal_,
+-  metis_partmeshnodal__
+-)
+-
++    METIS_PartMeshNodal,
++    (idx_t * ne, idx_t* nn, idx_t* eptr, idx_t* eind, idx_t* vwgt, idx_t* vsize,
++        idx_t* nparts, real_t* tpwgts, idx_t* options, idx_t* objval, idx_t* epart,
++        idx_t* npart),
++    (ne, nn, eptr, eind, vwgt, vsize, nparts, tpwgts, options, objval, epart, npart),
++    METIS_PARTMESHNODAL,
++    metis_partmeshnodal,
++    metis_partmeshnodal_,
++    metis_partmeshnodal__)
+ 
+ FRENAME(
+-  METIS_PartMeshDual,
+-  (idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, idx_t *vwgt, idx_t *vsize, 
+-   idx_t *ncommon, idx_t *nparts, real_t *tpwgts, idx_t *options, idx_t *objval, 
+-   idx_t *epart, idx_t *npart),
+-  (ne, nn, eptr, eind, vwgt, vsize, ncommon, nparts, tpwgts, options, objval, epart, npart),
+-  METIS_PARTMESHDUAL,
+-  metis_partmeshdual,
+-  metis_partmeshdual_,
+-  metis_partmeshdual__
+-)
+-
++    METIS_PartMeshDual,
++    (idx_t * ne, idx_t* nn, idx_t* eptr, idx_t* eind, idx_t* vwgt, idx_t* vsize,
++        idx_t* ncommon, idx_t* nparts, real_t* tpwgts, idx_t* options, idx_t* objval,
++        idx_t* epart, idx_t* npart, idx_t* adjwgt),
++    (ne, nn, eptr, eind, vwgt, vsize, ncommon, nparts, tpwgts, options, objval, epart, npart, adjwgt),
++    METIS_PARTMESHDUAL,
++    metis_partmeshdual,
++    metis_partmeshdual_,
++    metis_partmeshdual__)
+ 
+ FRENAME(
+-  METIS_NodeND,
+-  (idx_t *nvtxs, idx_t *xadj, idx_t *adjncy, idx_t *vwgt, idx_t *options, idx_t *perm, 
+-   idx_t *iperm),
+-  (nvtxs, xadj, adjncy, vwgt, options, perm, iperm),
+-  METIS_NODEND,
+-  metis_nodend,
+-  metis_nodend_,
+-  metis_nodend__
+-)
+-
++    METIS_NodeND,
++    (idx_t * nvtxs, idx_t* xadj, idx_t* adjncy, idx_t* vwgt, idx_t* options, idx_t* perm,
++        idx_t* iperm),
++    (nvtxs, xadj, adjncy, vwgt, options, perm, iperm),
++    METIS_NODEND,
++    metis_nodend,
++    metis_nodend_,
++    metis_nodend__)
+ 
+ FRENAME(
+-  METIS_Free,
+-  (void *ptr),
+-  (ptr),
+-  METIS_FREE,
+-  metis_free,
+-  metis_free_,
+-  metis_free__
+-)
+-
++    METIS_Free,
++    (void* ptr),
++    (ptr),
++    METIS_FREE,
++    metis_free,
++    metis_free_,
++    metis_free__)
+ 
+ FRENAME(
+-  METIS_SetDefaultOptions,
+-  (idx_t *options),
+-  (options),
+-  METIS_SETDEFAULTOPTIONS,
+-  metis_setdefaultoptions,
+-  metis_setdefaultoptions_,
+-  metis_setdefaultoptions__
+-)
+-    
+-
+-
++    METIS_SetDefaultOptions,
++    (idx_t * options),
++    (options),
++    METIS_SETDEFAULTOPTIONS,
++    metis_setdefaultoptions,
++    metis_setdefaultoptions_,
++    metis_setdefaultoptions__)
+diff --git a/CHOLMOD/SuiteSparse_metis/libmetis/meshpart.c b/CHOLMOD/SuiteSparse_metis/libmetis/meshpart.c
+index a66d10610..affb66455 100644
+--- a/CHOLMOD/SuiteSparse_metis/libmetis/meshpart.c
++++ b/CHOLMOD/SuiteSparse_metis/libmetis/meshpart.c
+@@ -14,249 +14,237 @@
+ 
+ #include "metislib.h"
+ 
+-
+ /*************************************************************************
+-* This function partitions a finite element mesh by partitioning its nodal
+-* graph using KMETIS and then assigning elements in a load balanced fashion.
+-**************************************************************************/
+-int METIS_PartMeshNodal(idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, 
+-          idx_t *vwgt, idx_t *vsize, idx_t *nparts, real_t *tpwgts, 
+-          idx_t *options, idx_t *objval, idx_t *epart, idx_t *npart)
++ * This function partitions a finite element mesh by partitioning its nodal
++ * graph using KMETIS and then assigning elements in a load balanced fashion.
++ **************************************************************************/
++int METIS_PartMeshNodal(idx_t* ne, idx_t* nn, idx_t* eptr, idx_t* eind,
++    idx_t* vwgt, idx_t* vsize, idx_t* nparts, real_t* tpwgts,
++    idx_t* options, idx_t* objval, idx_t* epart, idx_t* npart)
+ {
+-  int sigrval=0, renumber=0, ptype;
+-  idx_t *xadj=NULL, *adjncy=NULL;
+-  idx_t ncon=1, pnumflag=0;
+-  int rstatus=METIS_OK;
+-
+-  /* set up malloc cleaning code and signal catchers */
+-  if (!gk_malloc_init()) 
+-    return METIS_ERROR_MEMORY;
++    int sigrval = 0, renumber = 0, ptype;
++    idx_t *xadj = NULL, *adjncy = NULL;
++    idx_t ncon = 1, pnumflag = 0;
++    int rstatus = METIS_OK;
+ 
+-  gk_sigtrap();
++    /* set up malloc cleaning code and signal catchers */
++    if (!gk_malloc_init())
++        return METIS_ERROR_MEMORY;
+ 
+-  if ((sigrval = gk_sigcatch()) != 0) 
+-    goto SIGTHROW;
++    gk_sigtrap();
+ 
+-  renumber = GETOPTION(options, METIS_OPTION_NUMBERING, 0);
+-  ptype    = GETOPTION(options, METIS_OPTION_PTYPE, METIS_PTYPE_KWAY);
++    if ((sigrval = gk_sigcatch()) != 0)
++        goto SIGTHROW;
+ 
+-  /* renumber the mesh */
+-  if (renumber) {
+-    ChangeMesh2CNumbering(*ne, eptr, eind);
+-    options[METIS_OPTION_NUMBERING] = 0;
+-  }
++    renumber = GETOPTION(options, METIS_OPTION_NUMBERING, 0);
++    ptype = GETOPTION(options, METIS_OPTION_PTYPE, METIS_PTYPE_KWAY);
+ 
+-  /* get the nodal graph */
+-  rstatus = METIS_MeshToNodal(ne, nn, eptr, eind, &pnumflag, &xadj, &adjncy);
+-  if (rstatus != METIS_OK)
+-    raise(SIGERR);
++    /* renumber the mesh */
++    if (renumber) {
++        ChangeMesh2CNumbering(*ne, eptr, eind);
++        options[METIS_OPTION_NUMBERING] = 0;
++    }
+ 
+-  /* partition the graph */
+-  if (ptype == METIS_PTYPE_KWAY) 
+-    rstatus = METIS_PartGraphKway(nn, &ncon, xadj, adjncy, vwgt, vsize, NULL, 
+-                  nparts, tpwgts, NULL, options, objval, npart);
+-  else 
+-    rstatus = METIS_PartGraphRecursive(nn, &ncon, xadj, adjncy, vwgt, vsize, NULL, 
+-                  nparts, tpwgts, NULL, options, objval, npart);
++    /* get the nodal graph */
++    rstatus = METIS_MeshToNodal(ne, nn, eptr, eind, &pnumflag, &xadj, &adjncy);
++    if (rstatus != METIS_OK)
++        raise(SIGERR);
+ 
+-  if (rstatus != METIS_OK)
+-    raise(SIGERR);
++    /* partition the graph */
++    if (ptype == METIS_PTYPE_KWAY)
++        rstatus = METIS_PartGraphKway(nn, &ncon, xadj, adjncy, vwgt, vsize, NULL,
++            nparts, tpwgts, NULL, options, objval, npart);
++    else
++        rstatus = METIS_PartGraphRecursive(nn, &ncon, xadj, adjncy, vwgt, vsize, NULL,
++            nparts, tpwgts, NULL, options, objval, npart);
+ 
+-  /* partition the other side of the mesh */
+-  InduceRowPartFromColumnPart(*ne, eptr, eind, epart, npart, *nparts, tpwgts);
++    if (rstatus != METIS_OK)
++        raise(SIGERR);
+ 
++    /* partition the other side of the mesh */
++    InduceRowPartFromColumnPart(*ne, eptr, eind, epart, npart, *nparts, tpwgts);
+ 
+ SIGTHROW:
+-  if (renumber) {
+-    ChangeMesh2FNumbering2(*ne, *nn, eptr, eind, epart, npart);
+-    options[METIS_OPTION_NUMBERING] = 1;
+-  }
++    if (renumber) {
++        ChangeMesh2FNumbering2(*ne, *nn, eptr, eind, epart, npart);
++        options[METIS_OPTION_NUMBERING] = 1;
++    }
+ 
+-  METIS_Free(xadj);
+-  METIS_Free(adjncy);
++    METIS_Free(xadj);
++    METIS_Free(adjncy);
+ 
+-  gk_siguntrap();
+-  gk_malloc_cleanup(0);
++    gk_siguntrap();
++    gk_malloc_cleanup(0);
+ 
+-  return metis_rcode(sigrval);
++    return metis_rcode(sigrval);
+ }
+ 
+-
+-
+ /*************************************************************************
+-* This function partitions a finite element mesh by partitioning its dual
+-* graph using KMETIS and then assigning nodes in a load balanced fashion.
+-**************************************************************************/
+-int METIS_PartMeshDual(idx_t *ne, idx_t *nn, idx_t *eptr, idx_t *eind, 
+-          idx_t *vwgt, idx_t *vsize, idx_t *ncommon, idx_t *nparts, 
+-          real_t *tpwgts, idx_t *options, idx_t *objval, idx_t *epart, 
+-          idx_t *npart) 
++ * This function partitions a finite element mesh by partitioning its dual
++ * graph using KMETIS and then assigning nodes in a load balanced fashion.
++ **************************************************************************/
++int METIS_PartMeshDual(idx_t* ne, idx_t* nn, idx_t* eptr, idx_t* eind,
++    idx_t* vwgt, idx_t* vsize, idx_t* ncommon, idx_t* nparts,
++    real_t* tpwgts, idx_t* options, idx_t* objval, idx_t* epart,
++    idx_t* npart, idx_t* adjwgt)
+ {
+-  int sigrval=0, renumber=0, ptype;
+-  idx_t i, j;
+-  idx_t *xadj=NULL, *adjncy=NULL, *nptr=NULL, *nind=NULL;
+-  idx_t ncon=1, pnumflag=0;
+-  int rstatus = METIS_OK;
+-
+-  /* set up malloc cleaning code and signal catchers */
+-  if (!gk_malloc_init()) 
+-    return METIS_ERROR_MEMORY;
+-
+-  gk_sigtrap();
+-
+-  if ((sigrval = gk_sigcatch()) != 0) 
+-    goto SIGTHROW;
+-
+-  renumber = GETOPTION(options, METIS_OPTION_NUMBERING, 0);
+-  ptype    = GETOPTION(options, METIS_OPTION_PTYPE, METIS_PTYPE_KWAY);
+-
+-  /* renumber the mesh */
+-  if (renumber) {
+-    ChangeMesh2CNumbering(*ne, eptr, eind);
+-    options[METIS_OPTION_NUMBERING] = 0;
+-  }
+-
+-  /* get the dual graph */
+-  rstatus = METIS_MeshToDual(ne, nn, eptr, eind, ncommon, &pnumflag, &xadj, &adjncy);
+-  if (rstatus != METIS_OK)
+-    raise(SIGERR);
++    int sigrval = 0, renumber = 0, ptype;
++    idx_t i, j;
++    idx_t *xadj = NULL, *adjncy = NULL, *nptr = NULL, *nind = NULL;
++    idx_t ncon = 1, pnumflag = 0;
++    int rstatus = METIS_OK;
+ 
+-  /* partition the graph */
+-  if (ptype == METIS_PTYPE_KWAY) 
+-    rstatus = METIS_PartGraphKway(ne, &ncon, xadj, adjncy, vwgt, vsize, NULL, 
+-                  nparts, tpwgts, NULL, options, objval, epart);
+-  else 
+-    rstatus = METIS_PartGraphRecursive(ne, &ncon, xadj, adjncy, vwgt, vsize, NULL, 
+-                  nparts, tpwgts, NULL, options, objval, epart);
++    /* set up malloc cleaning code and signal catchers */
++    if (!gk_malloc_init())
++        return METIS_ERROR_MEMORY;
+ 
+-  if (rstatus != METIS_OK)
+-    raise(SIGERR);
++    gk_sigtrap();
+ 
++    if ((sigrval = gk_sigcatch()) != 0)
++        goto SIGTHROW;
+ 
+-  /* construct the node-element list */
+-  nptr = ismalloc(*nn+1, 0, "METIS_PartMeshDual: nptr");
+-  nind = imalloc(eptr[*ne], "METIS_PartMeshDual: nind");
++    renumber = GETOPTION(options, METIS_OPTION_NUMBERING, 0);
++    ptype = GETOPTION(options, METIS_OPTION_PTYPE, METIS_PTYPE_KWAY);
+ 
+-  for (i=0; i<*ne; i++) {
+-    for (j=eptr[i]; j<eptr[i+1]; j++)
+-      nptr[eind[j]]++;
+-  }
+-  MAKECSR(i, *nn, nptr);
++    /* renumber the mesh */
++    if (renumber) {
++        ChangeMesh2CNumbering(*ne, eptr, eind);
++        options[METIS_OPTION_NUMBERING] = 0;
++    }
+ 
+-  for (i=0; i<*ne; i++) {
+-    for (j=eptr[i]; j<eptr[i+1]; j++)
+-      nind[nptr[eind[j]]++] = i;
+-  }
+-  SHIFTCSR(i, *nn, nptr);
++    /* get the dual graph */
++    rstatus = METIS_MeshToDual(ne, nn, eptr, eind, ncommon, &pnumflag, &xadj, &adjncy);
++    if (rstatus != METIS_OK)
++        raise(SIGERR);
++
++    /* partition the graph */
++    if (ptype == METIS_PTYPE_KWAY)
++        rstatus = METIS_PartGraphKway(ne, &ncon, xadj, adjncy, vwgt, vsize, adjwgt,
++            nparts, tpwgts, NULL, options, objval, epart);
++    else
++        rstatus = METIS_PartGraphRecursive(ne, &ncon, xadj, adjncy, vwgt, vsize, adjwgt,
++            nparts, tpwgts, NULL, options, objval, epart);
++
++    if (rstatus != METIS_OK)
++        raise(SIGERR);
++
++    /* construct the node-element list */
++    nptr = ismalloc(*nn + 1, 0, "METIS_PartMeshDual: nptr");
++    nind = imalloc(eptr[*ne], "METIS_PartMeshDual: nind");
++
++    for (i = 0; i < *ne; i++) {
++        for (j = eptr[i]; j < eptr[i + 1]; j++)
++            nptr[eind[j]]++;
++    }
++    MAKECSR(i, *nn, nptr);
+ 
+-  /* partition the other side of the mesh */
+-  InduceRowPartFromColumnPart(*nn, nptr, nind, npart, epart, *nparts, tpwgts);
++    for (i = 0; i < *ne; i++) {
++        for (j = eptr[i]; j < eptr[i + 1]; j++)
++            nind[nptr[eind[j]]++] = i;
++    }
++    SHIFTCSR(i, *nn, nptr);
+ 
+-  gk_free((void **)&nptr, &nind, LTERM);
++    /* partition the other side of the mesh */
++    InduceRowPartFromColumnPart(*nn, nptr, nind, npart, epart, *nparts, tpwgts);
+ 
++    gk_free((void**)&nptr, &nind, LTERM);
+ 
+ SIGTHROW:
+-  if (renumber) {
+-    ChangeMesh2FNumbering2(*ne, *nn, eptr, eind, epart, npart);
+-    options[METIS_OPTION_NUMBERING] = 1;
+-  }
++    if (renumber) {
++        ChangeMesh2FNumbering2(*ne, *nn, eptr, eind, epart, npart);
++        options[METIS_OPTION_NUMBERING] = 1;
++    }
+ 
+-  METIS_Free(xadj);
+-  METIS_Free(adjncy);
++    METIS_Free(xadj);
++    METIS_Free(adjncy);
+ 
+-  gk_siguntrap();
+-  gk_malloc_cleanup(0);
++    gk_siguntrap();
++    gk_malloc_cleanup(0);
+ 
+-  return metis_rcode(sigrval);
++    return metis_rcode(sigrval);
+ }
+ 
+-
+-
+ /*************************************************************************/
+ /*! Induces a partitioning of the rows based on a a partitioning of the
+     columns. It is used by both the Nodal and Dual routines. */
+ /*************************************************************************/
+-void InduceRowPartFromColumnPart(idx_t nrows, idx_t *rowptr, idx_t *rowind,
+-         idx_t *rpart, idx_t *cpart, idx_t nparts, real_t *tpwgts)
++void InduceRowPartFromColumnPart(idx_t nrows, idx_t* rowptr, idx_t* rowind,
++    idx_t* rpart, idx_t* cpart, idx_t nparts, real_t* tpwgts)
+ {
+-  idx_t i, j, k, me;
+-  idx_t nnbrs, *pwgts, *nbrdom, *nbrwgt, *nbrmrk;
+-  idx_t *itpwgts;
+-
+-  pwgts  = ismalloc(nparts, 0, "InduceRowPartFromColumnPart: pwgts");
+-  nbrdom = ismalloc(nparts, 0, "InduceRowPartFromColumnPart: nbrdom");
+-  nbrwgt = ismalloc(nparts, 0, "InduceRowPartFromColumnPart: nbrwgt");
+-  nbrmrk = ismalloc(nparts, -1, "InduceRowPartFromColumnPart: nbrmrk");
+-
+-  iset(nrows, -1, rpart);
+-
+-  /* setup the integer target partition weights */
+-  itpwgts = imalloc(nparts, "InduceRowPartFromColumnPart: itpwgts");
+-  if (tpwgts == NULL) {
+-    iset(nparts, 1+nrows/nparts, itpwgts);
+-  }
+-  else {
+-    for (i=0; i<nparts; i++)
+-      itpwgts[i] = 1+nrows*tpwgts[i];
+-  }
+-
+-  /* first assign the rows consisting only of columns that belong to 
+-     a single partition. Assign rows that are empty to -2 (un-assigned) */
+-  for (i=0; i<nrows; i++) {
+-    if (rowptr[i+1]-rowptr[i] == 0) {
+-      rpart[i] = -2;
+-      continue;
++    idx_t i, j, k, me;
++    idx_t nnbrs, *pwgts, *nbrdom, *nbrwgt, *nbrmrk;
++    idx_t* itpwgts;
++
++    pwgts = ismalloc(nparts, 0, "InduceRowPartFromColumnPart: pwgts");
++    nbrdom = ismalloc(nparts, 0, "InduceRowPartFromColumnPart: nbrdom");
++    nbrwgt = ismalloc(nparts, 0, "InduceRowPartFromColumnPart: nbrwgt");
++    nbrmrk = ismalloc(nparts, -1, "InduceRowPartFromColumnPart: nbrmrk");
++
++    iset(nrows, -1, rpart);
++
++    /* setup the integer target partition weights */
++    itpwgts = imalloc(nparts, "InduceRowPartFromColumnPart: itpwgts");
++    if (tpwgts == NULL) {
++        iset(nparts, 1 + nrows / nparts, itpwgts);
++    } else {
++        for (i = 0; i < nparts; i++)
++            itpwgts[i] = 1 + nrows * tpwgts[i];
+     }
+ 
+-    me = cpart[rowind[rowptr[i]]];
+-    for (j=rowptr[i]+1; j<rowptr[i+1]; j++) {
+-      if (cpart[rowind[j]] != me)
+-        break;
+-    }
+-    if (j == rowptr[i+1]) {
+-      rpart[i] = me;
+-      pwgts[me]++;
+-    }
+-  }
+-
+-  /* next assign the rows consisting of columns belonging to multiple
+-     partitions in a  balanced way */
+-  for (i=0; i<nrows; i++) {
+-    if (rpart[i] == -1) { 
+-      for (nnbrs=0, j=rowptr[i]; j<rowptr[i+1]; j++) {
+-        me = cpart[rowind[j]];
+-        if (nbrmrk[me] == -1) {
+-          nbrdom[nnbrs] = me; 
+-          nbrwgt[nnbrs] = 1; 
+-          nbrmrk[me] = nnbrs++;
++    /* first assign the rows consisting only of columns that belong to
++       a single partition. Assign rows that are empty to -2 (un-assigned) */
++    for (i = 0; i < nrows; i++) {
++        if (rowptr[i + 1] - rowptr[i] == 0) {
++            rpart[i] = -2;
++            continue;
+         }
+-        else {
+-          nbrwgt[nbrmrk[me]]++;
++
++        me = cpart[rowind[rowptr[i]]];
++        for (j = rowptr[i] + 1; j < rowptr[i + 1]; j++) {
++            if (cpart[rowind[j]] != me)
++                break;
+         }
+-      }
+-      ASSERT(nnbrs > 0);
+-
+-      /* assign it first to the domain with most things in common */
+-      rpart[i] = nbrdom[iargmax(nnbrs, nbrwgt)];
+-
+-      /* if overweight, assign it to the light domain */
+-      if (pwgts[rpart[i]] > itpwgts[rpart[i]]) {
+-        for (j=0; j<nnbrs; j++) {
+-          if (pwgts[nbrdom[j]] < itpwgts[nbrdom[j]] ||
+-              pwgts[nbrdom[j]]-itpwgts[nbrdom[j]] < pwgts[rpart[i]]-itpwgts[rpart[i]]) {
+-            rpart[i] = nbrdom[j];
+-            break;
+-          }
++        if (j == rowptr[i + 1]) {
++            rpart[i] = me;
++            pwgts[me]++;
+         }
+-      }
+-      pwgts[rpart[i]]++;
+-
+-      /* reset nbrmrk array */
+-      for (j=0; j<nnbrs; j++) 
+-        nbrmrk[nbrdom[j]] = -1;
+     }
+-  }
+ 
+-  gk_free((void **)&pwgts, &nbrdom, &nbrwgt, &nbrmrk, &itpwgts, LTERM);
++    /* next assign the rows consisting of columns belonging to multiple
++       partitions in a  balanced way */
++    for (i = 0; i < nrows; i++) {
++        if (rpart[i] == -1) {
++            for (nnbrs = 0, j = rowptr[i]; j < rowptr[i + 1]; j++) {
++                me = cpart[rowind[j]];
++                if (nbrmrk[me] == -1) {
++                    nbrdom[nnbrs] = me;
++                    nbrwgt[nnbrs] = 1;
++                    nbrmrk[me] = nnbrs++;
++                } else {
++                    nbrwgt[nbrmrk[me]]++;
++                }
++            }
++            ASSERT(nnbrs > 0);
++
++            /* assign it first to the domain with most things in common */
++            rpart[i] = nbrdom[iargmax(nnbrs, nbrwgt)];
++
++            /* if overweight, assign it to the light domain */
++            if (pwgts[rpart[i]] > itpwgts[rpart[i]]) {
++                for (j = 0; j < nnbrs; j++) {
++                    if (pwgts[nbrdom[j]] < itpwgts[nbrdom[j]] || pwgts[nbrdom[j]] - itpwgts[nbrdom[j]] < pwgts[rpart[i]] - itpwgts[rpart[i]]) {
++                        rpart[i] = nbrdom[j];
++                        break;
++                    }
++                }
++            }
++            pwgts[rpart[i]]++;
++
++            /* reset nbrmrk array */
++            for (j = 0; j < nnbrs; j++)
++                nbrmrk[nbrdom[j]] = -1;
++        }
++    }
+ 
++    gk_free((void**)&pwgts, &nbrdom, &nbrwgt, &nbrmrk, &itpwgts, LTERM);
+ }
+diff --git a/SuiteSparse_config/CMakeLists.txt b/SuiteSparse_config/CMakeLists.txt
+index f76fd0e01..db3592f75 100644
+--- a/SuiteSparse_config/CMakeLists.txt
++++ b/SuiteSparse_config/CMakeLists.txt
+@@ -133,13 +133,13 @@ include ( SuiteSparseBLAS )
+ # configure files
+ #-------------------------------------------------------------------------------
+ 
+-configure_file ( "Config/SuiteSparse_config.h.in"
+-    "${PROJECT_SOURCE_DIR}/SuiteSparse_config.h"
+-    NEWLINE_STYLE LF )
++# configure_file ( "Config/SuiteSparse_config.h.in"
++#     "${PROJECT_SOURCE_DIR}/SuiteSparse_config.h"
++#     NEWLINE_STYLE LF )
+ 
+-configure_file ( "Config/README.md.in"
+-    "${PROJECT_SOURCE_DIR}/../README.md"
+-    NEWLINE_STYLE LF )
++# configure_file ( "Config/README.md.in"
++#     "${PROJECT_SOURCE_DIR}/../README.md"
++#     NEWLINE_STYLE LF )
+ 
+ #-------------------------------------------------------------------------------
+ # dynamic SuiteSparseConfig library properties

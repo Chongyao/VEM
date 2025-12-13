@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8801572..a182031 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -21,7 +21,7 @@ include(FeatureSummary) # More verbose Output for libraries using set_package_pr
+ 
+ # Look for supporting libraries
+ # -----------------------------
+-find_package(Eigen3 NO_MODULE REQUIRED)
++find_package(Eigen3 REQUIRED)
+ set_package_properties(Eigen3 PROPERTIES TYPE REQUIRED PURPOSE "C++ vector data structures")
+ message(STATUS "Found Eigen3 Version: ${Eigen3_VERSION} Path: ${Eigen3_DIR}")
+ 

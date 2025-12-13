@@ -1,0 +1,25 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f3e69b845..7181f6530 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -535,7 +535,7 @@ endif()
+ 
+ add_subdirectory(unsupported)
+ 
+-add_subdirectory(demos EXCLUDE_FROM_ALL)
++# add_subdirectory(demos EXCLUDE_FROM_ALL)
+ 
+ # must be after test and unsupported, for configuring buildtests.in
+ add_subdirectory(scripts EXCLUDE_FROM_ALL)
+diff --git a/Eigen/src/CholmodSupport/CholmodSupport.h b/Eigen/src/CholmodSupport/CholmodSupport.h
+index adaf52858..2a5b6a44e 100644
+--- a/Eigen/src/CholmodSupport/CholmodSupport.h
++++ b/Eigen/src/CholmodSupport/CholmodSupport.h
+@@ -319,6 +319,7 @@ class CholmodBase : public SparseSolverBase<Derived>
+     /** Returns a reference to the Cholmod's configuration structure to get a full control over the performed operations.
+      *  See the Cholmod user guide for details. */
+     cholmod_common& cholmod() { return m_cholmod; }
++    const cholmod_factor* get_cholmod_factor() {return m_cholmodFactor;}
+ 
+     #ifndef EIGEN_PARSED_BY_DOXYGEN
+     /** \internal */

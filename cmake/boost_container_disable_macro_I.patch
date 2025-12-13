@@ -1,0 +1,16 @@
+diff --git a/include/boost/container/detail/variadic_templates_tools.hpp b/include/boost/container/detail/variadic_templates_tools.hpp
+index 4f16fb0..3f2b3ab 100644
+--- a/include/boost/container/detail/variadic_templates_tools.hpp
++++ b/include/boost/container/detail/variadic_templates_tools.hpp
+@@ -25,7 +25,10 @@
+ 
+ #include <boost/container/detail/type_traits.hpp>
+ #include <cstddef>   //std::size_t
+-
++//For lapacke
++#ifdef I
++#undef I
++#endif
+ namespace boost {
+ namespace container {
+ namespace dtl {

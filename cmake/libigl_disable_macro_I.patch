@@ -1,0 +1,16 @@
+diff --git a/include/igl/colon.h b/include/igl/colon.h
+index 2e57cfe..60d3e66 100644
+--- a/include/igl/colon.h
++++ b/include/igl/colon.h
+@@ -9,6 +9,11 @@
+ #define IGL_COLON_H
+ #include "igl_inline.h"
+ #include <Eigen/Dense>
++
++//For lapacke
++#ifdef I
++#undef I
++#endif
+ namespace igl
+ {
+ 

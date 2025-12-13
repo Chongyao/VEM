@@ -1,0 +1,12 @@
+diff --git a/libs/throw_exception b/libs/throw_exception
+--- a/libs/throw_exception
++++ b/libs/throw_exception
+@@ -1 +1 @@
+-Subproject commit 7c8ec2114bc1f9ab2a8afbd629b96fbdd5901294
++Subproject commit 7c8ec2114bc1f9ab2a8afbd629b96fbdd5901294-dirty
+diff --git a/libs/type_traits b/libs/type_traits
+--- a/libs/type_traits
++++ b/libs/type_traits
+@@ -1 +1 @@
+-Subproject commit cc6fc3daa8e20c4a70b563d67ceb4c34d8c1c4d7
++Subproject commit cc6fc3daa8e20c4a70b563d67ceb4c34d8c1c4d7-dirty

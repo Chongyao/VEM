@@ -1,0 +1,16 @@
+diff --git a/include/boost/type_traits/integral_constant.hpp b/include/boost/type_traits/integral_constant.hpp
+index 2592bcb..28126cf 100644
+--- a/include/boost/type_traits/integral_constant.hpp
++++ b/include/boost/type_traits/integral_constant.hpp
+@@ -5,7 +5,10 @@
+ 
+ #ifndef BOOST_TYPE_TRAITS_INTEGRAL_CONSTANT_HPP
+ #define BOOST_TYPE_TRAITS_INTEGRAL_CONSTANT_HPP
+-
++//For lapacke
++#ifdef I
++#undef I
++#endif
+ #include <boost/config.hpp>
+ #include <boost/detail/workaround.hpp>
+ 

@@ -1,0 +1,107 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 16,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "_export_compile_commands",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+                "CPM_SOURCE_CACHE": "~/cpm_source_cache"
+            }
+        },
+        {
+          "name": "debug",
+          "inherits": "_export_compile_commands",
+          "displayName": "Ninja Debug",
+          "binaryDir": "${sourceDir}/build-debug",
+          "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_C_COMPILER": "gcc",
+            "CMAKE_CXX_COMPILER": "g++",
+            "ENABLE_MEMORY_TEST": "OFF"
+          }
+        },
+        {
+          "name": "debug-clang",
+          "inherits": "_export_compile_commands",
+          "displayName": "Ninja Debug clang",
+          "binaryDir": "${sourceDir}/build-debug-clang",
+          "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_C_COMPILER": "clang",
+            "CMAKE_CXX_COMPILER": "clang++",
+            "ENABLE_MEMORY_TEST": "OFF"
+            }
+        },
+        {
+          "name": "release",
+          "inherits": "_export_compile_commands",
+          "displayName": "Ninja Release",
+          "binaryDir": "${sourceDir}/build-release",
+          "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_C_COMPILER": "gcc",
+            "CMAKE_CXX_COMPILER": "g++",
+            "ENABLE_MEMORY_TEST": "OFF"
+            }
+        },
+        {
+            "name": "release-clang",
+            "inherits": "_export_compile_commands",
+            "displayName": "Ninja Release clang",
+            "binaryDir": "${sourceDir}/build-release-clang",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "reldbg",
+            "inherits": "_export_compile_commands",
+            "displayName": "Ninja RelWithDebInfo",
+            "binaryDir": "${sourceDir}/build-reldbg",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "ENABLE_MEMORY_TEST": "ON"
+            }
+        },
+        {
+            "name": "reldbg-clang",
+            "inherits": "_export_compile_commands",
+            "displayName": "Ninja RelWithDebInfo",
+            "binaryDir": "${sourceDir}/build-reldbg-clang",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "ENABLE_MEMORY_TEST": "ON"
+            }
+        }
+
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "reldbg",
+            "configurePreset": "reldbg"
+        }
+    ],
+    "testPresets": []
+}

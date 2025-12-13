@@ -1,0 +1,48 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b999993..e8f237a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,10 +10,12 @@ if (NOT (CMAKE_VERSION LESS 3.3))
+     cmake_policy(SET CMP0058 OLD)
+ endif()
+ 
+-set(AMGCL_MASTER_PROJECT OFF)
+-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+-    set(AMGCL_MASTER_PROJECT ON)
+-endif()
++#FORCE ENABLE MASTER PROJECT
++set(AMGCL_MASTER_PROJECT ON)
++# set(AMGCL_MASTER_PROJECT OFF)
++# if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
++#     set(AMGCL_MASTER_PROJECT ON)
++# endif()
+ 
+ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+ if (CMAKE_VERSION VERSION_LESS "3.1.0")
+@@ -199,7 +201,7 @@ endif()
+ #----------------------------------------------------------------------------
+ # Find Pastix
+ #----------------------------------------------------------------------------
+-find_package(Metis  QUIET)
++# find_package(Metis  QUIET)
+ find_package(Scotch QUIET)
+ find_package(Pastix QUIET)
+ find_package(BLAS   QUIET)
+@@ -231,11 +233,13 @@ if (Pastix_INCLUDES AND Scotch_FOUND AND BLAS_FOUND AND PTHREAD_LIBRARY AND BZ2_
+     target_compile_definitions(pastix_target INTERFACE AMGCL_HAVE_PASTIX)
+ endif()
+ 
++message("AMGCL_MASTER_PROJECT ${AMGCL_MASTER_PROJECT}")
+ if (AMGCL_MASTER_PROJECT)
+-    if (Boost_FOUND)
+-        option(AMGCL_BUILD_TESTS    OFF)
+-        option(AMGCL_BUILD_EXAMPLES OFF)
+-    endif()
++    # if (Boost_FOUND)
++    #     option(AMGCL_BUILD_TESTS    OFF)
++    #     option(AMGCL_BUILD_EXAMPLES OFF)
++    # endif()
++    message("AMGCL_BUILD_EXAMPLES ${AMGCL_BUILD_EXAMPLES}")
+ 
+     option(AMGCL_DISABLE_RARE_COMPONENTS OFF)
+ 

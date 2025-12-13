@@ -1,0 +1,73 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b999993..f3ad6af 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,9 +6,9 @@ endif()
+ 
+ project(AMGCL)
+ 
+-if (NOT (CMAKE_VERSION LESS 3.3))
+-    cmake_policy(SET CMP0058 OLD)
+-endif()
++# if (NOT (CMAKE_VERSION LESS 3.3))
++#     cmake_policy(SET CMP0058 OLD)
++# endif()
+ 
+ set(AMGCL_MASTER_PROJECT OFF)
+ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+@@ -74,15 +74,15 @@ endif ()
+ #----------------------------------------------------------------------------
+ # Common compile options and definitions
+ #----------------------------------------------------------------------------
+-target_compile_options(amgcl INTERFACE
+-    # Compiler is GNU (g++):
+-    $<$<CXX_COMPILER_ID:GNU>:$<BUILD_INTERFACE:-Wall;-Wextra;-Wpedantic>>
+-    # Compiler is Clang:
+-    $<$<CXX_COMPILER_ID:Clang>:$<BUILD_INTERFACE:-Wall;-Wextra;-Wpedantic;-Wno-c99-extensions>>
+-    # Compiler is MSVC:
+-    $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
+-    $<$<CXX_COMPILER_ID:MSVC>:/wd4715>
+-    )
++# target_compile_options(amgcl INTERFACE
++#     # Compiler is GNU (g++):
++#     $<$<CXX_COMPILER_ID:GNU>:$<BUILD_INTERFACE:-Wall;-Wextra;-Wpedantic>>
++#     # Compiler is Clang:
++#     $<$<CXX_COMPILER_ID:Clang>:$<BUILD_INTERFACE:-Wall;-Wextra;-Wpedantic;-Wno-c99-extensions>>
++#     # Compiler is MSVC:
++#     $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
++#     $<$<CXX_COMPILER_ID:MSVC>:/wd4715>
++#     )
+ 
+ target_compile_definitions(amgcl INTERFACE
+     # Compiler is MSVC:
+diff --git a/amgcl/util.hpp b/amgcl/util.hpp
+index 28c3dab..c9e51a4 100644
+--- a/amgcl/util.hpp
++++ b/amgcl/util.hpp
+@@ -43,6 +43,11 @@ THE SOFTWARE.
+ #include <stdexcept>
+ #include <cstddef>
+ 
++//For lapacke
++#ifdef I
++#undef I
++#endif
++
+ // If asked explicitly, or if boost is available, enable
+ // using boost::propert_tree::ptree as amgcl parameters:
+ #ifndef AMGCL_NO_BOOST
+diff --git a/amgcl/value_type/static_matrix.hpp b/amgcl/value_type/static_matrix.hpp
+index 1a39f01..0615741 100644
+--- a/amgcl/value_type/static_matrix.hpp
++++ b/amgcl/value_type/static_matrix.hpp
+@@ -37,6 +37,10 @@ THE SOFTWARE.
+ #include <amgcl/backend/builtin.hpp>
+ #include <amgcl/value_type/interface.hpp>
+ 
++//For Lapacke
++#ifdef I
++#undef I
++#endif
+ namespace amgcl {
+ 
+ template <typename T, int N, int M>
