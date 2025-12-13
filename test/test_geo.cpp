@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "VEMMesh.hpp"
+#include "io/VTKWriter.hpp"
 
 bool isApprox(double a, double b, double tol = 1e-10) {
     return std::abs(a - b) < tol;
@@ -64,7 +64,8 @@ int main() {
     }
     
     // 5. 导出 VTK 检查 (可选)
-    mesh.exportToVTK("cube_test.vtu");
+    vem::io::VTKWriter writer;
+    writer.save(mesh, "cube_test.vtu");
 
     return 0;
 }

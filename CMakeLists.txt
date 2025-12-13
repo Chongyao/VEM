@@ -60,6 +60,7 @@ set(MAXIMA_OUTPUT_DIR "${PROJECT_SOURCE_DIR}/maxima")
 #set(CMAKE_CUDA_ARCHITECTURES 75)
 # List of all includes
 set(INCLUDES
+  tinyxml2
   # suitesparse
   # cereal
   # openmp

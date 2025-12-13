@@ -51,6 +51,6 @@ public:
     const Eigen::MatrixXd& getNodes() const { return nodes_; }
     const VEMFace* getFace(int id) const { return faces_[id].get(); }
     const PolyhedronElement& getElement(int id) const { return elements_[id]; }
+    int getNumNodes() const { return nodes_.cols(); }
 
-    void exportToVTK(const std::string& filename) const;
 };
