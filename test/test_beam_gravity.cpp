@@ -1,19 +1,20 @@
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <set>
-#include <iomanip>
 #include "VEMMesh.hpp"
 #include "VEMSolver.hpp"
 #include "fem/FEMSolver.hpp"
 #include "io/VTKLoader.hpp"
 #include "io/VTKWriter.hpp"
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <set>
+#include <vector>
 
 using namespace vem;
 
 // 辅助：生成梁的四面体网格
 // box: [0, L] x [0, W] x [0, H]
-void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, double H) {
+void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, double H)
+{
     int n_nodes = (nx + 1) * (ny + 1) * (nz + 1);
     Eigen::MatrixXd V(3, n_nodes);
 
@@ -61,17 +62,17 @@ void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, d
                 // T2: 0 2 3 7
                 // T3: 0 5 7 4
                 // T4: 0 2 5 7
-                // T5: 2 5 6 7 
+                // T5: 2 5 6 7
                 // Wait, constructing valid tet mesh manually is verbose.
                 // Let's use a simpler 5-tet decomposition (symmetric) or assume standard marching.
-                
+
                 // 采用如下 6-tet 划分 (Path: 0->1->2->6->7 etc?)
                 // Tet 1: (0,1,2,6) -> Wrong edge?
-                
+
                 // 让我们用最稳健的写法：
-                int Hex[8] = {n0, n1, n2, n3, n4, n5, n6, n7};
+                int Hex[8] = { n0, n1, n2, n3, n4, n5, n6, n7 };
                 // Tet 1: 0, 5, 1, 4 ? No.
-                
+
                 // 使用一种标准划分:
                 // 0 1 2 5
                 // 0 2 3 7
@@ -79,18 +80,18 @@ void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, d
                 // 0 2 5 7  <-- Central
                 // 2 5 6 7
                 // 5 tets? No, 6 is better for structured grid consistency.
-                
+
                 // VEM 不挑食，只要闭合即可。
                 // 我们添加 5 个四面体版本 (Checkerboard pattern needed for consistency, but for single block ok)
                 // 为了简单且不出错，这里只添加 1 个巨大的六面体作为 VEM 单元？
                 // 不，用户说 "由 tet 组成"。
-                
+
                 // OK, 6 Tets decomposition:
                 auto addTet = [&](int a, int b, int c, int d) {
-                    std::vector<int> f1 = {a, c, b};
-                    std::vector<int> f2 = {a, b, d};
-                    std::vector<int> f3 = {a, d, c};
-                    std::vector<int> f4 = {b, c, d};
+                    std::vector<int> f1 = { a, c, b };
+                    std::vector<int> f2 = { a, b, d };
+                    std::vector<int> f3 = { a, d, c };
+                    std::vector<int> f4 = { b, c, d };
                     std::vector<int> fs;
                     fs.push_back(mesh.addTriFace(f1));
                     fs.push_back(mesh.addTriFace(f2));
@@ -108,22 +109,22 @@ void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, d
                 // 否则面不匹配。
                 // 既然 VEM 可以处理任意多面体，为什么不直接把这个 Hex 作为一个单元？
                 // "Beam, 由 Tet 组成" -> 好吧，我们必须用 Tet。
-                
+
                 // 既然写 6-Tet 比较繁琐，我们改用 5-Tet 且加 checkerboard 逻辑？
                 // 或者更简单：只生成 12 个三角形面组成的六面体，然后告诉 VEM 它是 Polyhedron。
                 // 但为了对比 FEM (LinearTet)，必须是 Tet。
-                
+
                 // 6-Tet 分解公式 (对角线 0-6):
                 addTet(n0, n1, n5, n6); // 错了，体积覆盖。
-                
+
                 // 让我们用一种绝对安全的写法 (0,1,2,3 bottom, 4,5,6,7 top)
                 // 1. (0,1,2,6)
                 // 2. (0,2,3,7) -- no
-                
+
                 // 算了，为了不写错拓扑，我们换个思路：
                 // 这是一个 VEM 代码库。我们直接生成 Polyhedral Mesh (Hex) 对比 VEM Hex vs FEM Tet?
                 // 不，用户要求 Tet。
-                
+
                 // 采用 5-tet decomposition (无需坐标变换，只要奇偶格子翻转)
                 bool flip = ((i + j + k) % 2 == 1);
                 if (!flip) {
@@ -134,14 +135,14 @@ void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, d
                     // Correct 5-tet:
                     // Corners: (0,1,3,4), (1,2,5,6), (3,2,7,6), (4,5,7,6) -> 4 tets
                     // Inner: (1,3,4,6) -> ?
-                    
+
                     // 修正的 5-Tet:
                     // 1. (0, 1, 3, 4)
                     // 2. (1, 2, 5, 6)
                     // 3. (3, 6, 2, 7) - wait indices
                     // 4. (4, 6, 7, 5)
                     // 5. (1, 4, 6, 3) - Central
-                    
+
                     addTet(n0, n1, n3, n4);
                     addTet(n1, n2, n5, n6);
                     addTet(n2, n3, n6, n7);
@@ -163,64 +164,83 @@ void createBeamMesh(VEMMesh& mesh, int nx, int ny, int nz, double L, double W, d
 }
 
 // 计算体力载荷向量
-Eigen::VectorXd computeGravityLoad(const VEMMesh& mesh, const Eigen::Vector3d& gravity, double rho) {
+Eigen::VectorXd computeGravityLoad(const VEMMesh& mesh, const Eigen::Vector3d& gravity, double rho)
+{
     int n_nodes = mesh.getNumNodes();
     Eigen::VectorXd f = Eigen::VectorXd::Zero(n_nodes * 3);
-    
+
     int n_elems = mesh.getNumElements();
     for (int i = 0; i < n_elems; ++i) {
         const auto& elem = mesh.getElement(i);
         double mass = elem.volume * rho;
-        
+
         // 获取单元所有节点
         std::set<int> node_set;
         for (int fid : elem.face_indices) {
-            for (int nid : mesh.getFace(fid)->node_indices) node_set.insert(nid);
+            for (int nid : mesh.getFace(fid)->node_indices)
+                node_set.insert(nid);
         }
-        
+
         // 将重力均分到节点 (Lumping)
         // 对于线性单元这是精确的 (consistent force vector for constant body force)
         double node_load_mag = mass / node_set.size();
-        
+
         for (int nid : node_set) {
-            f(3*nid + 0) += node_load_mag * gravity(0);
-            f(3*nid + 1) += node_load_mag * gravity(1);
-            f(3*nid + 2) += node_load_mag * gravity(2);
+            f(3 * nid + 0) += node_load_mag * gravity(0);
+            f(3 * nid + 1) += node_load_mag * gravity(1);
+            f(3 * nid + 2) += node_load_mag * gravity(2);
         }
     }
     return f;
 }
 
-int main() {
+int main()
+{
     std::cout << "=== Beam Gravity Test (VEM vs FEM on Tets) ===" << std::endl;
 
     // 1. 生成网格
     VEMMesh mesh;
-    
+
     io::VTKLoader loader;
     mesh = *loader.load("beam.vtu");
+
+    // ... 加载网格后 ...
+    double min_x = 1e30, max_x = -1e30;
+    const auto& nodes = mesh.getNodes();
+    for (int i = 0; i < nodes.cols(); ++i) {
+        if (nodes(0, i) < min_x)
+            min_x = nodes(0, i);
+        if (nodes(0, i) > max_x)
+            max_x = nodes(0, i);
+    }
+    std::cout << "Mesh X range: [" << min_x << ", " << max_x << "]" << std::endl;
     // 10x1x1 的梁，划分细一点: 10x2x2
     // createBeamMesh(mesh, 10, 2, 2, 10.0, 1.0, 1.0);
-    
-    std::cout << "Mesh: " << mesh.getNumNodes() << " nodes, " 
+
+    std::cout << "Mesh: " << mesh.getNumNodes() << " nodes, "
               << mesh.getNumElements() << " tetrahedra." << std::endl;
 
-    Material mat; 
-    mat.E = 1e6; 
+    Material mat;
+    mat.E = 1e6;
     mat.nu = 0.3;
-    
+
     double rho = 1.0;
     Eigen::Vector3d gravity(0, 0, -1.0); // Z 向下
 
-    // 2. 边界条件: 固定 x=0 的面
+    // 2. 边界条件
     std::map<int, double> bc;
-    const auto& nodes = mesh.getNodes();
+    double tol = 1e-4; // 放宽一点容差，防止浮点误差
     for (int i = 0; i < nodes.cols(); ++i) {
-        if (std::abs(nodes(0, i)) < 1e-9) { // x == 0
-            bc[3*i+0] = 0.0;
-            bc[3*i+1] = 0.0;
-            bc[3*i+2] = 0.0;
+        // 固定最左端 (Min X)
+        if (std::abs(nodes(0, i) - min_x) < tol) {
+            bc[3 * i + 0] = 0.0;
+            bc[3 * i + 1] = 0.0;
+            bc[3 * i + 2] = 0.0;
         }
+    }
+    if (bc.empty()) {
+        std::cerr << "Error: No fixed nodes found! Check BC logic." << std::endl;
+        return -1;
     }
 
     // 3. 计算载荷
@@ -238,51 +258,55 @@ int main() {
     vem_solver.assemble(mat);
     Eigen::VectorXd u_vem = vem_solver.solve(bc, f_ext);
 
-    // 6. 对比结果 (Tip Displacement)
-    // 找到 x=10, y=0.5, z=0.5 (大约) 的点，或者取所有端部点的平均
+    // 6. 对比结果
     double tip_z_fem = 0.0;
     double tip_z_vem = 0.0;
     int tip_count = 0;
-    
+
     for (int i = 0; i < nodes.cols(); ++i) {
-        if (std::abs(nodes(0, i) - 10.0) < 1e-9) {
-            tip_z_fem += u_fem(3*i + 2);
-            tip_z_vem += u_vem(3*i + 2);
+        // 统计最右端 (Max X)
+        if (std::abs(nodes(0, i) - max_x) < tol) {
+            tip_z_fem += u_fem(3 * i + 2);
+            tip_z_vem += u_vem(3 * i + 2);
             tip_count++;
         }
     }
+    if (tip_count == 0) {
+        std::cout << "Error: No tip nodes found." << std::endl;
+        return 0;
+    }
+
     tip_z_fem /= tip_count;
     tip_z_vem /= tip_count;
-
     std::cout << "Tip Displacement Z (FEM): " << tip_z_fem << std::endl;
     std::cout << "Tip Displacement Z (VEM): " << tip_z_vem << std::endl;
-    
+
     double diff = std::abs(tip_z_fem - tip_z_vem);
     double rel_err = diff / std::abs(tip_z_fem);
-    
+
     std::cout << "Relative Difference: " << rel_err << std::endl;
 
     // 7. 导出 VTK
     // 我们需要把位移加到节点上再输出？或者作为 PointData 输出
     // VTKWriter 目前只输出几何。我们可以修改 VTKWriter 支持 PointData，
     // 或者简单点：直接修改 mesh 的 nodes 位置输出变形后的网格 (Deformed Mesh)
-    
+
     // Save Deformed VEM
     VEMMesh mesh_vem = mesh; // Copy topology
     Eigen::MatrixXd V_deformed_vem = nodes;
-    for(int i=0; i<nodes.cols(); ++i) {
-        V_deformed_vem.col(i) += u_vem.segment<3>(3*i);
+    for (int i = 0; i < nodes.cols(); ++i) {
+        V_deformed_vem.col(i) += u_vem.segment<3>(3 * i);
     }
     mesh_vem.setNodes(V_deformed_vem);
-    
+
     io::VTKWriter writer;
     writer.save(mesh_vem, "beam_vem_deformed.vtu");
-    
+
     // Save Deformed FEM
     VEMMesh mesh_fem = mesh;
     Eigen::MatrixXd V_deformed_fem = nodes;
-    for(int i=0; i<nodes.cols(); ++i) {
-        V_deformed_fem.col(i) += u_fem.segment<3>(3*i);
+    for (int i = 0; i < nodes.cols(); ++i) {
+        V_deformed_fem.col(i) += u_fem.segment<3>(3 * i);
     }
     mesh_fem.setNodes(V_deformed_fem);
     writer.save(mesh_fem, "beam_fem_deformed.vtu");
