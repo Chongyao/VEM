@@ -253,7 +253,6 @@ Eigen::MatrixXd VEMElement::computeD() const {
     
     return D;
 }
-
 Eigen::MatrixXd VEMElement::computeStiffness(const Material& mat) const {
     // 1. Compute Matrices
     Eigen::MatrixXd G = computeG(mat);
@@ -261,19 +260,25 @@ Eigen::MatrixXd VEMElement::computeStiffness(const Material& mat) const {
     Eigen::MatrixXd D = computeD();
     
     // 2. Consistency Term: K_c = B^T * G^+ * B
-    // G is singular (rank deficiency 6), so we use Pseudo-Inverse
-    Eigen::MatrixXd G_pinv = G.completeOrthogonalDecomposition().pseudoInverse();
+    // Robust Pseudo-Inverse: Set threshold to ignore rigid body modes (eigenvalues ~ 0)
+    // G scales with Volume * E. For unit cube E=1000, G ~ 1000.
+    // Machine epsilon is 1e-16. Rigid body modes should be < 1e-10.
+    // We set threshold relative to the max eigenvalue.
+    
+    auto decomp = G.completeOrthogonalDecomposition();
+    // Default threshold is usually fine, but explicit is safer for VEM
+    // decomp.setThreshold(1e-6); // Option A
+    
+    Eigen::MatrixXd G_pinv = decomp.pseudoInverse();
     Eigen::MatrixXd K_c = B.transpose() * G_pinv * B;
     
     // 3. Stabilization Term: K_s
-    // We use a least-squares projection stabilization
     // P_ls = (D^T D)^-1 D^T
     // Stabilizer = (I - D * P_ls)^T * (I - D * P_ls)
-    // This penalizes the difference between u and its best-fit polynomial P(u)
     
-    // D^T * D is small (12x12), easy to invert
     Eigen::MatrixXd DtD = D.transpose() * D;
-    Eigen::MatrixXd P_ls = DtD.ldlt().solve(D.transpose()); // Robust solve
+    // Add small regularization to diagonal of DtD just in case? Usually not needed for nice meshes.
+    Eigen::MatrixXd P_ls = DtD.ldlt().solve(D.transpose()); 
     
     int n_dofs = D.rows();
     Eigen::MatrixXd I = Eigen::MatrixXd::Identity(n_dofs, n_dofs);
@@ -282,15 +287,20 @@ Eigen::MatrixXd VEMElement::computeStiffness(const Material& mat) const {
     Eigen::MatrixXd K_s_raw = Proj_defect.transpose() * Proj_defect;
     
     // Calculate stabilization parameter alpha
-    // Typically trace(K_c) / N_dofs or similar scaling
-    // Use standard trace scaling
+    // Standard Trace Trick: alpha * trace(K_s_raw) ~ trace(K_c)
+    // We want K_s to scale similarly to K_c on the diagonal.
     double trace_Kc = K_c.trace();
-    // Avoid division by zero if K_c is empty or zero (though unlikely)
-    double alpha = (trace_Kc > 1e-12) ? (trace_Kc / n_dofs) : 1.0; 
+    double trace_Ks = K_s_raw.trace();
     
-    // Usually stability scaling factor is around 0.5 to 1.0 times the mean diagonal stiffness
-    // Let's use 1.0 * mean_diag
-    // Gain 2014 suggests stability parameter based on material trace, but trace method is robust.
+    double alpha = 1.0;
+    if (trace_Ks > 1e-12) {
+        // Gain 2014 suggests scaling based on material properties, 
+        // but trace scaling is a robust algebraic alternative.
+        // alpha * trace_Ks = trace_Kc
+        alpha = (trace_Kc > 1e-12) ? (trace_Kc / trace_Ks) : 1.0; 
+        
+        // Sometimes a factor of 0.5 or 1.0 is added. Let's stick to matching the traces.
+    }
     
     Eigen::MatrixXd K_s = alpha * K_s_raw;
     
