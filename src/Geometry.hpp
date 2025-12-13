@@ -43,31 +43,7 @@ class PolygonFace : public VEMFace {
 public:
     PolygonFace(const std::vector<int>& nodes) : VEMFace(nodes) {}
 
-    GeometricProps computeProps(const Eigen::MatrixXd& all_nodes) const override {
-        // 使用 "Shoelace formula" 的 3D 推广
-        Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
-        Eigen::Vector3d normal_weighted = Eigen::Vector3d::Zero();
-        Eigen::Vector3d p0 = all_nodes.col(node_indices[0]);
-
-        // 简单的扇形剖分求和（假设凸或星形，对于一般多边形需更稳健算法）
-        for (size_t i = 1; i < node_indices.size() - 1; ++i) {
-            Eigen::Vector3d p1 = all_nodes.col(node_indices[i]);
-            Eigen::Vector3d p2 = all_nodes.col(node_indices[i+1]);
-            Eigen::Vector3d cross = (p1 - p0).cross(p2 - p0);
-            normal_weighted += cross;
-            
-            // 累加三角形重心 * 面积
-            double tri_area = 0.5 * cross.norm();
-            Eigen::Vector3d tri_center = (p0 + p1 + p2) / 3.0;
-            centroid += tri_center * tri_area; 
-        }
-
-        GeometricProps props;
-        props.area = 0.5 * normal_weighted.norm();
-        props.normal = normal_weighted.normalized();
-        props.centroid = centroid / props.area; // 加权平均
-        return props;
-    }
+    GeometricProps computeProps(const Eigen::MatrixXd& all_nodes) const override;
     
     void integrateMonomials(const Eigen::MatrixXd& all_nodes, Eigen::MatrixXd& integrals) const override {
         // 后续实现
