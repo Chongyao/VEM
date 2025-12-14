@@ -4,21 +4,24 @@
 #include "io/VTKLoader.hpp"
 #include "io/VTKWriter.hpp"
 #include <iostream>
+#include <map> // 必须包含
 #include <set>
 
-using namespace vem;
-// 计算重力载荷 (复用逻辑)
+using namespace vem; // 使用命名空间简化代码
+
+// 计算重力载荷
 void computeGravityLoad(const VEMMesh& mesh, Eigen::VectorXd& f)
 {
     int n_nodes = mesh.getNumNodes();
     f.setZero(3 * n_nodes);
 
-    Eigen::Vector3d g(0, 0, -1.0); // 重力向下
+    Eigen::Vector3d g(0, 0, -1.0);
     double rho = 1.0;
 
     for (int i = 0; i < mesh.getNumElements(); ++i) {
+        if (!mesh.isElementActive(i))
+            continue;
         const auto& el = mesh.getElement(i);
-        // 注意：GC 之后所有剩下的单元都是 active 的，不需要检查 mask
 
         double mass = el.volume * rho;
 
@@ -54,53 +57,53 @@ int main(int argc, char** argv)
         return 1;
     VEMMesh& mesh = *mesh_ptr;
 
-    // 2. 获取几何范围 (Bounding Box)
     const auto& nodes = mesh.getNodes();
     double min_x = nodes.row(0).minCoeff();
-    double max_x = nodes.row(0).maxCoeff();
-    std::cout << "Mesh Bounds X: [" << min_x << ", " << max_x << "]" << std::endl;
+    std::cout << "Mesh Bounds X min: " << min_x << std::endl;
 
     Material mat;
     mat.E = 1e6;
     mat.nu = 0.3;
 
-    // 3. 执行 Agglomeration
+    // 2. 执行 Agglomeration
     AgglomerationManager agglomerator(mesh, mat);
-
-    // 设定阈值 (例如 0.1) 和最大轮数
-    // 如果网格本身质量较好，可以把阈值设高一点来强制测试合并效果
     agglomerator.run(0.1, 5);
 
-    // 4. [关键] 垃圾回收
-    // 清除所有被合并的死单元，重排 ID，重建拓扑
+    // 3. 垃圾回收
     std::cout << "Cleaning up mesh..." << std::endl;
     mesh.garbageCollect();
 
-    // 5. 求解 (在干净的网格上)
-    std::cout << "Solving on optimized mesh (" << mesh.getNumElements() << " elements)..." << std::endl;
-
+    // 4. 求解
+    std::cout << "Solving on optimized mesh..." << std::endl;
     VEMSolver solver(mesh);
 
-    // BC: Fix X = min_x (动态范围)
-    std::vector<int> fixed_nodes;
+    // [FIX] 组装刚度矩阵
+    solver.assemble(mat);
+
+    // [FIX] 构建 Dirichlet 边界条件 Map (Global DOF Index -> Value)
+    std::map<int, double> dirichlet_bc;
     double tol = 1e-3;
+    int fixed_count = 0;
+
     for (int i = 0; i < mesh.getNumNodes(); ++i) {
         if (std::abs(nodes(0, i) - min_x) < tol) {
-            fixed_nodes.push_back(i);
+            // 固定该节点的所有 3 个自由度 (x, y, z)
+            dirichlet_bc[3 * i + 0] = 0.0;
+            dirichlet_bc[3 * i + 1] = 0.0;
+            dirichlet_bc[3 * i + 2] = 0.0;
+            fixed_count++;
         }
     }
-    std::cout << "Fixed " << fixed_nodes.size() << " nodes at X = " << min_x << std::endl;
-    solver.setBoundaryConditions(fixed_nodes);
+    std::cout << "Fixed " << fixed_count << " nodes at X = " << min_x << std::endl;
 
     // Load
     Eigen::VectorXd f;
     computeGravityLoad(mesh, f);
 
     // Solve
-    Eigen::VectorXd u = solver.solve(f, mat);
+    Eigen::VectorXd u = solver.solve(dirichlet_bc, f);
 
-    // 6. 保存结果
-    // 由于执行了 GC，Writer 不需要做任何修改，直接遍历输出即可
+    // 5. 保存结果
     io::VTKWriter writer;
     std::string out_name = "beam_agglomerated_result.vtu";
     writer.save(mesh, u, out_name);
