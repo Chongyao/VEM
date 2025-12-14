@@ -4,10 +4,13 @@ from tqdm import tqdm
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import VTK_POLYHEDRON, vtkUnstructuredGrid
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
+import sys
 
 # ================= 参数 =================
 OUTPUT_FILE = "beam_cvt_final.vtu"
 N_SEEDS = 2000 # 为了测试稳定，先用少一点，或者用你的 1000
+if len(sys.argv) > 1:
+    N_SEEDS = int(sys.argv[1])
 N_ITERS = 10
 BOUNDS = [-2.0, 2.0, -0.5, 0.5, -0.5, 0.5]
 

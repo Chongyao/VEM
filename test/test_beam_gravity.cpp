@@ -335,6 +335,59 @@
 
 using namespace vem;
 
+// 理论解：欧拉-伯努利悬臂梁 (Z向重力)
+// w(x) = (q * x^2) / (24 * E * I) * (x^2 - 4*L*x + 6*L^2)
+// 注意：坐标系要对齐。假设 Fixed at x = -2 (即 x_local = 0), Free at x = 2 (x_local = L)
+double getBeamTheoryDeflection(double x_world, double E, double I, double q, double L)
+{
+    // 转换坐标系：从 [-2, 2] 映射到 [0, 4] (假设悬臂根部在 0)
+    // 你的模型 fixed at -2, so x_local = x_world - (-2) = x_world + 2
+    double x = x_world + 2.0;
+
+    // 欧拉伯努利公式 (悬臂梁受均布载荷 q)
+    // w = - (q x^2)/(24EI) * (x^2 - 4Lx + 6L^2)
+    // 符号为负，因为重力向下
+    double w = -(q * x * x) / (24.0 * E * I) * (x * x - 4.0 * L * x + 6.0 * L * L);
+    return w;
+}
+
+// 计算相对 L2 误差
+double computeL2Error(const VEMMesh& mesh, const Eigen::VectorXd& u_vem, const Material& mat)
+{
+    double total_error_sq = 0.0;
+    double total_ref_sq = 0.0;
+
+    // 梁参数
+    double L = 4.0;
+    double b = 1.0;
+    double h = 1.0;
+    double I = b * std::pow(h, 3) / 12.0;
+    double q = 1.0 * 1.0; // rho * Area * g (rho=1, g=1, Area=1)
+
+    const auto& nodes = mesh.getNodes();
+    int n_nodes = mesh.getNumNodes();
+
+    for (int i = 0; i < n_nodes; ++i) {
+        double x = nodes(0, i);
+        double y = nodes(1, i);
+        double z = nodes(2, i);
+
+        // 获取 VEM 计算的位移
+        double uz_vem = u_vem(3 * i + 2);
+
+        // 获取理论解 (仅比较 Z 方向，因为这是主变形)
+        double uz_exact = getBeamTheoryDeflection(x, mat.E, I, q, L);
+
+        // 累加误差
+        total_error_sq += std::pow(uz_vem - uz_exact, 2);
+        total_ref_sq += std::pow(uz_exact, 2);
+    }
+
+    if (total_ref_sq < 1e-10)
+        return 0.0;
+    return std::sqrt(total_error_sq / total_ref_sq);
+}
+
 // 计算体力载荷向量 (Lumped Gravity Load)
 // 该方法对任意多面体通用：计算单元总质量，然后均分到单元的所有节点上
 Eigen::VectorXd computeGravityLoad(const VEMMesh& mesh, const Eigen::Vector3d& gravity, double rho)
