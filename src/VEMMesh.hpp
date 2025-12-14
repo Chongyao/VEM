@@ -1,81 +1,63 @@
 #pragma once
-#include "Geometry.hpp"
+#include "Geometry.hpp" // 必须包含这个，因为它定义了 PolyhedronElement
 #include <Eigen/Dense>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-struct PolyhedronElement {
-    int id;
-    std::vector<int> face_indices;
-
-    // 缓存数据
-    double volume = 0.0;
-    Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
-
-    // 新增：计算几何属性
-    void updateGeometricProps(const Eigen::MatrixXd& nodes,
-        const std::vector<std::unique_ptr<VEMFace>>& faces);
-};
 
 class VEMMesh {
 private:
     Eigen::MatrixXd nodes_;
     std::vector<std::unique_ptr<VEMFace>> faces_;
+    // PolyhedronElement 现在定义在 Geometry.hpp 中
     std::vector<PolyhedronElement> elements_;
 
+    // 拓扑邻接信息
     std::vector<std::vector<int>> face_to_elements_;
 
+    // 面去重查找表
     std::map<std::vector<int>, int> face_map_;
 
 public:
     VEMMesh() = default;
 
-    VEMMesh(const VEMMesh& other); // Copy Constructor
-    VEMMesh& operator=(const VEMMesh& other); // Copy Assignment
+    // [Fix] 恢复拷贝构造函数和赋值运算符（深拷贝）
+    VEMMesh(const VEMMesh& other);
+    VEMMesh& operator=(const VEMMesh& other);
 
+    // 允许移动
     VEMMesh(VEMMesh&&) = default;
     VEMMesh& operator=(VEMMesh&&) = default;
+
     void setNodes(const Eigen::MatrixXd& V) { nodes_ = V; }
 
     int getNumElements() const { return elements_.size(); }
-
-    int addTriFace(const std::vector<int>& ids);
-    // {
-    //     faces_.push_back(std::make_unique<TriFace>(ids));
-    //     return faces_.size() - 1;
-    // }
-
-    int addPolygonFace(const std::vector<int>& ids);
-
-    void addElement(const std::vector<int>& face_ids)
-    {
-        PolyhedronElement elem;
-        elem.id = elements_.size();
-        elem.face_indices = face_ids;
-        // 创建时立即计算几何属性
-        elem.updateGeometricProps(nodes_, faces_);
-        elements_.push_back(elem);
-    }
+    int getNumFaces() const { return faces_.size(); }
+    int getNumNodes() const { return nodes_.cols(); }
 
     const Eigen::MatrixXd& getNodes() const { return nodes_; }
     const VEMFace* getFace(int id) const { return faces_[id].get(); }
     const PolyhedronElement& getElement(int id) const { return elements_[id]; }
-    int getNumNodes() const { return nodes_.cols(); }
 
-    // 构建/更新拓扑邻接关系
-    // 每次网格发生变动（如加载后、合并后）都需要调用
+    // --- Mesh Construction & Editing ---
+
+    int addTriFace(const std::vector<int>& ids);
+    int addPolygonFace(const std::vector<int>& ids);
+
+    // [New] 添加元素：自动计算几何，自动更新拓扑
+    int addElement(const std::vector<int>& face_ids);
+
+    // [New] 标记单元为不活跃
+    void deactivateElement(int elem_id);
+
+    // [New] 检查单元是否活跃
+    bool isElementActive(int elem_id) const;
+
+    // --- Topology ---
+
     void buildTopology();
-
-    // 获取共享指定面的单元列表
     const std::vector<int>& getElementsOnFace(int face_id) const;
-
-    // 获取某单元的所有相邻单元 ID
-    // 用于 Agglomeration 寻找合并候选者
     std::vector<int> getElementNeighbors(int elem_id) const;
-
-    //  检查网格是否为流形 (Manifold)
-    // 即检查是否所有内部面都恰好被 2 个单元共享
     bool checkManifold() const;
-    int getNumFaces() const { return faces_.size(); }
 };

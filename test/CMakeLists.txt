@@ -9,6 +9,7 @@ set(TESTS
     beam_gravity
     stability
     adjacent
+    agglomeration_preview
 )
 
 foreach(TEST IN LISTS TESTS)

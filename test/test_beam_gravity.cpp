@@ -109,7 +109,7 @@ Eigen::VectorXd computeGravityLoad(const VEMMesh& mesh, const Eigen::Vector3d& g
 
 int main(int argc, char** argv)
 {
-    std::cout << "=== Beam Gravity Test (VEM Polyhedral Only) ===" << std::endl;
+    std::cout << "=== Beam Gravity Test (VEM Polyhedral Only) ===\n";
 
     // 1. 加载网格
     // 默认为生成的完美 CVT 多面体网格，也可以通过命令行参数传入
@@ -121,10 +121,10 @@ int main(int argc, char** argv)
     VEMMesh mesh;
     io::VTKLoader loader;
 
-    std::cout << "Loading mesh: " << mesh_file << " ..." << std::endl;
+    std::cout << "Loading mesh: " << mesh_file << " ...\n";
     auto loaded_mesh = loader.load(mesh_file);
     if (!loaded_mesh) {
-        std::cerr << "Error: Failed to load mesh file: " << mesh_file << std::endl;
+        std::cerr << "Error: Failed to load mesh file: " << mesh_file << "\n";
         return -1;
     }
     mesh = *loaded_mesh;
