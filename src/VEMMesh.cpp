@@ -1,27 +1,22 @@
 #include "VEMMesh.hpp"
 #include <fstream>
 #include <iostream>
-// --- 新增：拷贝构造函数实现 ---
 VEMMesh::VEMMesh(const VEMMesh& other)
     : nodes_(other.nodes_)
     , elements_(other.elements_)
 {
-    // 深拷贝 faces
     faces_.reserve(other.faces_.size());
     for (const auto& face_ptr : other.faces_) {
-        // 利用 clone() 创建副本
         faces_.push_back(face_ptr->clone());
     }
 }
 
-// --- 新增：赋值运算符实现 ---
 VEMMesh& VEMMesh::operator=(const VEMMesh& other)
 {
     if (this != &other) {
         nodes_ = other.nodes_;
         elements_ = other.elements_;
 
-        // 清空并重建 faces
         faces_.clear();
         faces_.reserve(other.faces_.size());
         for (const auto& face_ptr : other.faces_) {
@@ -30,7 +25,6 @@ VEMMesh& VEMMesh::operator=(const VEMMesh& other)
     }
     return *this;
 }
-// 实现 PolyhedronElement 的几何计算
 void PolyhedronElement::updateGeometricProps(const Eigen::MatrixXd& nodes,
     const std::vector<std::unique_ptr<VEMFace>>& faces)
 {
@@ -49,8 +43,9 @@ void PolyhedronElement::updateGeometricProps(const Eigen::MatrixXd& nodes,
         auto props = faces[fid]->computeProps(nodes);
         x_ref += props.centroid;
     }
-    if (!face_indices.empty())
+    if (!face_indices.empty()) {
         x_ref /= face_indices.size();
+    }
 
     // 2. 累加金字塔
     for (int fid : face_indices) {
@@ -91,7 +86,7 @@ void VEMMesh::buildTopology()
 
         for (int fid : elem.face_indices) {
             if (fid < 0 || fid >= faces_.size()) {
-                std::cerr << "[Error] Element " << elem.id << " refers to invalid face " << fid << std::endl;
+                std::cerr << "[Error] Element " << elem.id << " refers to invalid face " << fid << "\n";
                 continue;
             }
             face_to_elements_[fid].push_back(elem.id);
@@ -111,8 +106,9 @@ const std::vector<int>& VEMMesh::getElementsOnFace(int face_id) const
 std::vector<int> VEMMesh::getElementNeighbors(int elem_id) const
 {
     std::vector<int> neighbors;
-    if (elem_id < 0 || elem_id >= elements_.size())
+    if (elem_id < 0 || elem_id >= elements_.size()) {
         return neighbors;
+    }
 
     const auto& elem = elements_[elem_id];
 
@@ -157,7 +153,42 @@ bool VEMMesh::checkManifold() const
 
     std::cout << "[Topology Check] Boundary Faces: " << boundary_count
               << ", Internal Faces: " << internal_count
-              << ", Non-Manifold/Error: " << error_count << std::endl;
+              << ", Non-Manifold/Error: " << error_count << "\n";
 
     return (error_count == 0);
+}
+int VEMMesh::addPolygonFace(const std::vector<int>& ids)
+{
+    std::vector<int> sorted_nodes = ids;
+    std::sort(sorted_nodes.begin(), sorted_nodes.end());
+
+    auto it = face_map_.find(sorted_nodes);
+    if (it != face_map_.end()) {
+        return it->second;
+    }
+
+    int new_id = faces_.size();
+
+    auto face = std::make_unique<PolygonFace>(ids);
+    faces_.push_back(std::move(face));
+
+    face_map_[sorted_nodes] = new_id;
+
+    return new_id;
+}
+
+int VEMMesh::addTriFace(const std::vector<int>& ids)
+{
+    std::vector<int> sorted_nodes = ids;
+    std::sort(sorted_nodes.begin(), sorted_nodes.end());
+
+    auto it = face_map_.find(sorted_nodes);
+    if (it != face_map_.end()) {
+        return it->second;
+    }
+
+    faces_.push_back(std::make_unique<TriFace>(ids));
+
+    face_map_[sorted_nodes] = faces_.size() - 1;
+    return faces_.size() - 1;
 }

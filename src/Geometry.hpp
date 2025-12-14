@@ -1,8 +1,8 @@
 #pragma once
-#include <vector>
 #include <Eigen/Dense>
-#include <memory>
 #include <map>
+#include <memory>
+#include <vector>
 
 struct GeometricProps {
     double area;
@@ -14,10 +14,12 @@ class VEMFace {
 public:
     std::vector<int> node_indices;
 
-    VEMFace(const std::vector<int>& nodes) : node_indices(nodes) {}
+    VEMFace(const std::vector<int>& nodes)
+        : node_indices(nodes)
+    {
+    }
     virtual ~VEMFace() = default;
 
-    // --- 新增：虚拟克隆接口，用于深拷贝 ---
     virtual std::unique_ptr<VEMFace> clone() const = 0;
 
     virtual GeometricProps computeProps(const Eigen::MatrixXd& all_nodes) const = 0;
@@ -27,9 +29,11 @@ public:
 
 class TriFace : public VEMFace {
 public:
-    TriFace(const std::vector<int>& nodes) : VEMFace(nodes) {}
-    
-    // --- 新增实现 ---
+    TriFace(const std::vector<int>& nodes)
+        : VEMFace(nodes)
+    {
+    }
+
     std::unique_ptr<VEMFace> clone() const override;
 
     GeometricProps computeProps(const Eigen::MatrixXd& all_nodes) const override;
@@ -39,7 +43,10 @@ public:
 
 class PolygonFace : public VEMFace {
 public:
-    PolygonFace(const std::vector<int>& nodes) : VEMFace(nodes) {}
+    PolygonFace(const std::vector<int>& nodes)
+        : VEMFace(nodes)
+    {
+    }
 
     // --- 新增实现 ---
     std::unique_ptr<VEMFace> clone() const override;
