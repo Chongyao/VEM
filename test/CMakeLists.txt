@@ -8,6 +8,7 @@ set(TESTS
     vem_vs_fem
     beam_gravity
     stability
+    adjacent
 )
 
 foreach(TEST IN LISTS TESTS)

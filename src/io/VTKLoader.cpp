@@ -226,7 +226,7 @@ std::unique_ptr<VEMMesh> VTKLoader::load(const std::string& filename) const
                         elem_face_ids.push_back(mesh->addPolygonFace(face_nodes));
                     }
                 } else {
-                    std::cerr << "[VTKLoader] Error: Cell " << i << " is Polyhedron but no face data found." << std::endl;
+                    std::cerr << "[VTKLoader] Error: Cell " << i << " is Polyhedron but no face data found.\n";
                     continue;
                 }
 
@@ -236,7 +236,13 @@ std::unique_ptr<VEMMesh> VTKLoader::load(const std::string& filename) const
     }
 
     std::cout << "[VTKLoader] Loaded " << mesh->getNumNodes() << " nodes, "
-              << mesh->getNumElements() << " elements." << std::endl;
+              << mesh->getNumElements() << " elements.\n";
+    std::cout << "[VTKLoader] Building mesh topology...\n";
+    mesh->buildTopology(); // <--- 新增这行
+    mesh->checkManifold(); // <--- 可选：打印一下拓扑状态
+
+    std::cout << "[VTKLoader] Loaded " << mesh->getNumNodes() << " nodes, "
+              << mesh->getNumElements() << " elements.\n";
     return mesh;
 }
 
