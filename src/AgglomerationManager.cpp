@@ -16,20 +16,25 @@ std::vector<int> AgglomerationManager::getMergedFaces(int id1, int id2)
 
     std::vector<int> new_faces;
     // 保留不共享的面
-    for (int f : f1)
-        if (f2.find(f) == f2.end())
+    for (int f : f1) {
+        if (f2.find(f) == f2.end()) {
             new_faces.push_back(f);
-    for (int f : f2)
-        if (f1.find(f) == f1.end())
+        }
+    }
+    for (int f : f2) {
+        if (f1.find(f) == f1.end()) {
             new_faces.push_back(f);
+        }
+    }
 
     return new_faces;
 }
 
 double AgglomerationManager::computeCurrentSigma(int elem_id)
 {
-    if (!mesh_.isElementActive(elem_id))
+    if (!mesh_.isElementActive(elem_id)) {
         return 0.0;
+    }
 
     const auto& elem = mesh_.getElement(elem_id);
     VEMElement vem_el(mesh_, elem);
@@ -42,8 +47,9 @@ double AgglomerationManager::simulateMergeSigma(int id1, int id2)
 {
     // 1. 获取新面集合
     std::vector<int> new_faces = getMergedFaces(id1, id2);
-    if (new_faces.empty())
+    if (new_faces.empty()) {
         return 0.0;
+    }
 
     // 2. 构造临时单元
     PolyhedronElement temp_el;
@@ -62,8 +68,9 @@ double AgglomerationManager::simulateMergeSigma(int id1, int id2)
     GeometryUtils::computePolyhedronProps(mesh_.getNodes(), face_ptrs, temp_el.volume, temp_el.centroid);
 
     // 5. 计算刚度与 Sigma
-    if (temp_el.volume <= 1e-12)
+    if (temp_el.volume <= 1e-12) {
         return 0.0; // 避免退化单元
+    }
 
     VEMElement vem_el(mesh_, temp_el);
     Eigen::MatrixXd K = vem_el.computeStiffness(mat_);
@@ -97,8 +104,9 @@ MergeCandidate AgglomerationManager::findBestNeighbor(int elem_id)
     // double current_sigma = computeCurrentSigma(elem_id);
 
     for (int nb_id : neighbors) {
-        if (!mesh_.isElementActive(nb_id))
+        if (!mesh_.isElementActive(nb_id)) {
             continue;
+        }
 
         double s = simulateMergeSigma(elem_id, nb_id);
 
@@ -117,8 +125,8 @@ MergeCandidate AgglomerationManager::findBestNeighbor(int elem_id)
 
 void AgglomerationManager::run(double sigma_threshold, int max_passes)
 {
-    std::cout << "\n=== Starting Agglomeration Process ===" << std::endl;
-    std::cout << "Threshold: " << sigma_threshold << ", Max Passes: " << max_passes << std::endl;
+    std::cout << "\n=== Starting Agglomeration Process ===\n";
+    std::cout << "Threshold: " << sigma_threshold << ", Max Passes: " << max_passes << "\n";
 
     for (int pass = 0; pass < max_passes; ++pass) {
         int merge_count = 0;
@@ -129,8 +137,9 @@ void AgglomerationManager::run(double sigma_threshold, int max_passes)
         std::priority_queue<ElementEntry, std::vector<ElementEntry>, std::greater<ElementEntry>> pq;
 
         for (int i = 0; i < mesh_.getNumElements(); ++i) {
-            if (!mesh_.isElementActive(i))
+            if (!mesh_.isElementActive(i)) {
                 continue;
+            }
             active_count++;
 
             double sigma = computeCurrentSigma(i);
@@ -140,10 +149,10 @@ void AgglomerationManager::run(double sigma_threshold, int max_passes)
         }
 
         std::cout << "Pass " << pass + 1 << ": Active Elements = " << active_count
-                  << ", Bad Elements = " << pq.size() << std::endl;
+                  << ", Bad Elements = " << pq.size() << "\n";
 
         if (pq.empty()) {
-            std::cout << "-> No bad elements left. Converged." << std::endl;
+            std::cout << "-> No bad elements left. Converged." << "\n";
             break;
         }
 
@@ -155,8 +164,9 @@ void AgglomerationManager::run(double sigma_threshold, int max_passes)
             int curr_id = entry.id;
 
             // 检查是否仍然活跃
-            if (!mesh_.isElementActive(curr_id))
+            if (!mesh_.isElementActive(curr_id)) {
                 continue;
+            }
 
             // 寻找合并对象
             MergeCandidate best = findBestNeighbor(curr_id);
@@ -194,10 +204,11 @@ void AgglomerationManager::run(double sigma_threshold, int max_passes)
 
     // 最终统计
     int final_active = 0;
-    for (int i = 0; i < mesh_.getNumElements(); ++i)
-        if (mesh_.isElementActive(i))
+    for (int i = 0; i < mesh_.getNumElements(); ++i) {
+        if (mesh_.isElementActive(i)) {
             final_active++;
+        }
+    }
 
-    std::cout << "=== Agglomeration Finished. Final Active Elements: " << final_active << " ===\n"
-              << std::endl;
+    std::cout << "=== Agglomeration Finished. Final Active Elements: " << final_active << " ===\n";
 }

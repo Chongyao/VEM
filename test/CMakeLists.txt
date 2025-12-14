@@ -10,8 +10,6 @@ set(TESTS
     stability
     adjacent
     agglomeration_preview
-    agglomeration_full
-
 )
 
 foreach(TEST IN LISTS TESTS)

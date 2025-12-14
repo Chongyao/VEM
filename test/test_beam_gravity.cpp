@@ -1,3 +1,4 @@
+#include "AgglomerationManager.hpp"
 #include "VEMMesh.hpp"
 #include "VEMSolver.hpp"
 // #include "fem/FEMSolver.hpp" // [Modified] 移除 FEM 求解器包含
@@ -186,14 +187,12 @@ int main(int argc, char** argv)
     double min_x = 1e30, max_x = -1e30;
     const auto& nodes = mesh.getNodes();
     for (int i = 0; i < nodes.cols(); ++i) {
-        if (nodes(0, i) < min_x)
-            min_x = nodes(0, i);
-        if (nodes(0, i) > max_x)
-            max_x = nodes(0, i);
+        min_x = std::min(min_x, nodes(0, i));
+        max_x = std::max(max_x, nodes(0, i));
     }
-    std::cout << "Mesh X range: [" << min_x << ", " << max_x << "]" << std::endl;
+    std::cout << "Mesh X range: [" << min_x << ", " << max_x << "]\n";
     std::cout << "Mesh Info: " << mesh.getNumNodes() << " nodes, "
-              << mesh.getNumElements() << " polyhedral elements." << std::endl;
+              << mesh.getNumElements() << " polyhedral elements.\n";
 
     // 材料参数 (Gain et al. 2014)
     Material mat;
@@ -203,6 +202,14 @@ int main(int argc, char** argv)
     double rho = 1.0;
     Eigen::Vector3d gravity(0, 0, -10.0); // Z 向下
 
+    if (false) {
+        AgglomerationManager agglomerator(mesh, mat);
+        agglomerator.run(0.1, 5);
+
+        // 3. 垃圾回收
+        std::cout << "Cleaning up mesh...\n";
+        mesh.garbageCollect();
+    }
     // 2. 边界条件 (Fixed at min_x)
     std::map<int, double> bc;
     double tol = 1e-4;
@@ -297,7 +304,7 @@ int main(int argc, char** argv)
     mesh_vem.setNodes(V_deformed_vem);
 
     io::VTKWriter writer;
-    writer.save(mesh_vem, "beam_vem_deformed.vtu");
+    writer.save(mesh, u_vem, "beam_vem_deformed.vtu");
 
     std::cout << "[DONE] VEM Polyhedral simulation finished." << std::endl;
 
