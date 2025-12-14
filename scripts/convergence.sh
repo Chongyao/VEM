@@ -5,16 +5,12 @@ BUILD_DIR="./build"
 BIN_DIR="$BUILD_DIR/bin"
 SCRIPT_DIR="./scripts"
 OUTPUT_DIR="./results"
-# 确保编译是新的
-echo "--- Compiling Project ---"
-cmake -B $BUILD_DIR -S . -DCMAKE_BUILD_TYPE=Release
-cmake --build $BUILD_DIR --target test_beam_gravity -j4
 
 # 创建结果目录
 mkdir -p $OUTPUT_DIR
 
 # 定义网格密度列表
-SEEDS=(100 200 500 1000 2000)
+SEEDS=(100 200 500 1000 2000 5000 10000)
 LOG_FILE="$OUTPUT_DIR/convergence_log.txt"
 rm -f $LOG_FILE
 

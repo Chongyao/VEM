@@ -30,22 +30,22 @@ def generate_seeds(n_seeds, bounds):
     seeds[:, 2] = seeds[:, 2] * (z_max - z_min) + z_min
     return seeds
 
-def Lloyd_iteration(seeds, bounds, n_iters):
-# Lloyd 迭代
-    for it in range(N_ITERS):
-        pts_mirror = reflect_points(seeds, BOUNDS)
+def Lloyd_iteration(seeds, bounds, n_iters, n_seeds):
+    x_min, x_max, y_min, y_max, z_min, z_max = bounds
+    for it in range(n_iters):
+        pts_mirror = reflect_points(seeds, bounds)
         vor = Voronoi(pts_mirror)
         new_seeds = []
-        for i in range(N_SEEDS):
+        for i in range(n_seeds):
             region = vor.regions[vor.point_region[i]]
             if not region: 
                 new_seeds.append(seeds[i])
                 continue
             verts = vor.vertices[region]
             center = np.mean(verts, axis=0)
-            center[0] = np.clip(center[0], bx_min, bx_max)
-            center[1] = np.clip(center[1], by_min, by_max)
-            center[2] = np.clip(center[2], bz_min, bz_max)
+            center[0] = np.clip(center[0], x_min, x_max)
+            center[1] = np.clip(center[1], y_min, y_max)
+            center[2] = np.clip(center[2], z_min, z_max)
             new_seeds.append(center)
         seeds = np.array(new_seeds)
 
@@ -61,7 +61,7 @@ def generate_mesh(n_seeds=1000, n_iters=10, bounds=[-2.0,2.0,-0.5,0.5,-0.5,0.5],
     # 1. 生成初始种子点
     print("Generating Initial Seeds...")
     seeds = generate_seeds(N_SEEDS, BOUNDS)
-    Lloyd_iteration(seeds, BOUNDS, N_ITERS)
+    Lloyd_iteration(seeds, BOUNDS, N_ITERS, N_SEEDS)
 
 
 
