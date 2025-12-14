@@ -2,16 +2,25 @@
 #include "MathUtils.hpp"
 #include "VEMElement.hpp"
 #include "VEMMesh.hpp"
-#include <map>
-#include <set>
+#include "VEMSolver.hpp" // 用于计算刚度
+#include <queue>
 #include <vector>
 
-namespace vem {
-
-// 简单的合并候选项结构
+// 定义合并候选项
 struct MergeCandidate {
     int neighbor_id;
     double new_sigma;
+};
+
+// 定义优先队列元素
+struct ElementEntry {
+    int id;
+    double sigma;
+    // 最小堆：sigma 小的排在前面
+    bool operator>(const ElementEntry& other) const
+    {
+        return sigma > other.sigma;
+    }
 };
 
 class AgglomerationManager {
@@ -19,36 +28,34 @@ private:
     VEMMesh& mesh_;
     Material mat_;
 
-    // 标记单元是否已被合并 (active = true 表示有效)
-    std::vector<bool> active_mask_;
+    // 我们直接使用 mesh_.isElementActive()，不再需要单独维护 mask
+    // 但为了算法效率，可以用局部变量缓存
 
 public:
     AgglomerationManager(VEMMesh& mesh, Material mat)
         : mesh_(mesh)
         , mat_(mat)
     {
-        // 初始化掩码，默认全有效
-        active_mask_.resize(mesh_.getNumElements(), true);
     }
 
-    // Step 1 核心功能：模拟合并
-    // 计算如果将 el1 和 el2 合并，新单元的 sigma 是多少
-    // 返回: 0.0 ~ 1.0 的比率
+    // [New] 核心算法主循环
+    // sigma_threshold: 低于此值的单元尝试合并 (例如 0.1)
+    // max_passes: 最大迭代轮数
+    void run(double sigma_threshold, int max_passes = 5);
+
+    // [New] 执行合并：将 id1 和 id2 合并，返回新单元 ID
+    int mergeElements(int id1, int id2);
+
+    // 模拟合并：计算如果合并后的 sigma
     double simulateMergeSigma(int id1, int id2);
 
-    // Step 1 核心功能：寻找最佳邻居
-    // 遍历所有邻居，找到合并后 sigma 最高的那个
-    // 返回: {best_neighbor_id, max_sigma}。如果没有合法合并，返回 {-1, 0.0}
+    // 寻找最佳邻居
     MergeCandidate findBestNeighbor(int elem_id);
 
-    // 计算当前单元的 sigma (工具函数)
+    // 工具：计算当前单元 Sigma
     double computeCurrentSigma(int elem_id);
 
 private:
-    // 辅助：为临时单元计算几何属性 (Volume, Centroid)
-    // 因为 PolyhedronElement::updateGeometricProps 可能需要访问私有 faces 数组，
-    // 我们在这里实现一个适配版本
-    void updateTempElementGeometry(PolyhedronElement& elem);
+    // 辅助：获取两个单元合并后的面集合
+    std::vector<int> getMergedFaces(int id1, int id2);
 };
-
-} // namespace vem

@@ -196,3 +196,32 @@ bool VEMMesh::checkManifold() const
 
     return (error_count == 0);
 }
+void VEMMesh::garbageCollect()
+{
+    // 1. 收集所有活跃单元
+    std::vector<PolyhedronElement> active_elements;
+    active_elements.reserve(elements_.size()); // 预分配，避免多次拷贝
+
+    int old_count = elements_.size();
+
+    for (const auto& elem : elements_) {
+        if (elem.active) {
+            active_elements.push_back(elem);
+        }
+    }
+
+    // 2. 替换旧列表
+    elements_ = std::move(active_elements);
+
+    // 3. 重置单元 ID (0, 1, 2, ...)
+    for (int i = 0; i < elements_.size(); ++i) {
+        elements_[i].id = i;
+    }
+
+    // 4. 重建拓扑 (Face -> Element)
+    // 因为 ID 变了，必须重新建立映射
+    buildTopology();
+
+    std::cout << "[VEMMesh] Garbage Collected: "
+              << old_count << " -> " << elements_.size() << " elements." << std::endl;
+}

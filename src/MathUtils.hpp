@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <iostream>
 
-namespace vem {
-
 class MathUtils {
 public:
     /**
@@ -26,8 +24,10 @@ public:
         // 2. 确定最大特征值
         double max_val = eigenvalues.maxCoeff();
         // 如果矩阵全零或极小，直接返回 0 (极度病态)
-        if (max_val < 1e-15)
+
+        if (max_val < 1e-15) {
             return 0.0;
+        }
 
         // 3. 设定阈值过滤刚体模态 (Rigid Body Modes)
         // 3D 弹性力学理论上有 6 个零能模式 (3平移+3旋转)
@@ -36,20 +36,19 @@ public:
 
         for (int i = 0; i < eigenvalues.size(); ++i) {
             double val = eigenvalues(i);
-            if (val > max_lambda)
-                max_lambda = val;
+            max_lambda = std::max(max_lambda, val);
 
             // 只统计非零特征值
-            if (val > threshold && val < min_lambda)
+            if (val > threshold && val < min_lambda) {
                 min_lambda = val;
+            }
         }
 
         // 如果没找到非零特征值（比如全零矩阵），返回 0
-        if (min_lambda == 1e30)
+        if (min_lambda == 1e30) {
             return 0.0;
+        }
 
         return min_lambda / max_lambda;
     }
 };
-
-} // namespace vem

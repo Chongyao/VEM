@@ -20,35 +20,26 @@ void VEMSolver::assemble(const Material& mat)
     // VEM 单元较密，保守估计
     triplets.reserve(n_dofs_ * 50);
 
-    int n_elements = 0; // 可以添加接口获取单元数量，目前只能通过 exportToVTK 看到，或者我们在 Mesh 中加个 getNumElements
-    // 修正：VEMMesh 目前没有直接暴露 elements_ 向量大小的接口。
-    // 我们需要在 VEMMesh.hpp 中添加 int getNumElements() const { return elements_.size(); }
-    // 假设您会去添加这个接口，或者我们现在先用 getElement(i) 尝试直到失败？
-    // 为了代码稳健，请先去 VEMMesh.hpp 添加 getNumElements()。
-
+    int n_elements = 0;
     // 假设已添加 getNumElements
     int num_elems = mesh_.getNumElements();
 
     for (int i = 0; i < num_elems; ++i) {
+        if (!mesh_.isElementActive(i)) {
+            continue;
+        }
         const auto& elem = mesh_.getElement(i);
 
         // 2. 计算单元刚度矩阵
         VEMElement vem_elem(mesh_, elem);
         Eigen::MatrixXd K_el = vem_elem.computeStiffness(mat);
 
-        // 3. 获取单元节点的全局索引
-        // 我们需要复用 "收集节点" 的逻辑。
-        // 为了性能，最好在 VEMElement 中暴露 "getLocalToGlobalNodeMap"
-        // 但现在我们重新收集一遍 (逻辑必须与 computeStiffness 内部完全一致!)
-        //
-        // 注意：VEMElement::computeD/B 内部是按 unique_node_ids (std::set 排序) 来排列 DOF 的。
-        // 我们必须保证这里也是一样的顺序。
-
         std::set<int> unique_node_ids;
         for (int fid : elem.face_indices) {
             const auto* face = mesh_.getFace(fid);
-            for (int nid : face->node_indices)
+            for (int nid : face->node_indices) {
                 unique_node_ids.insert(nid);
+            }
         }
         std::vector<int> local_nodes(unique_node_ids.begin(), unique_node_ids.end());
 

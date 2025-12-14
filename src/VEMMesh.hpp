@@ -45,15 +45,11 @@ public:
     int addTriFace(const std::vector<int>& ids);
     int addPolygonFace(const std::vector<int>& ids);
 
-    // [New] 添加元素：自动计算几何，自动更新拓扑
     int addElement(const std::vector<int>& face_ids);
-
-    // [New] 标记单元为不活跃
     void deactivateElement(int elem_id);
-
-    // [New] 检查单元是否活跃
     bool isElementActive(int elem_id) const;
 
+    void garbageCollect();
     // --- Topology ---
 
     void buildTopology();
